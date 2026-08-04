@@ -1,0 +1,6 @@
+cal_sleep0 2408ms
+cal_sleep4 6154ms
+cal_sleep8 10074ms
+full_flag_cmp 4094ms
+cal_sleep0_2 2137ms
+cal_sleep4_2 6174ms
