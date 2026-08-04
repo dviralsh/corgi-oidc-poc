@@ -1,0 +1,10 @@
+# debug5 run Tue Aug  4 21:57:59 UTC 2026
+cal1 1922ms
+cal2 1880ms
+match_raw 1955ms
+match_strip 1873ms
+verify_strip 3872ms
+len_strip 15259ms
+cal3 2053ms
+cal4 1852ms
+
