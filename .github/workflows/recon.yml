@@ -8,7 +8,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   recon:
@@ -220,8 +220,14 @@ jobs:
           echo "=== ALL TIMINGS ==="
           cat timings.txt
 
-      - name: Upload timings artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nibble-timings
-          path: timings.txt
+      - name: Commit timings to repo (readable via raw.githubusercontent.com)
+        run: |
+          git config user.email "bot@github-actions"
+          git config user.name "GitHub Actions"
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/dviralsh/corgi-oidc-poc.git
+          git fetch origin corgi
+          git checkout corgi
+          cp timings.txt timings.txt
+          git add timings.txt
+          git commit -m "timing results [skip ci]" || echo "Nothing to commit"
+          git push origin corgi
