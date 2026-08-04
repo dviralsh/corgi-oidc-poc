@@ -43,6 +43,22 @@ jobs:
       - name: Describe EC2 instances
         run: aws ec2 describe-instances --output json
 
+      - name: Check bucket policies
+        run: |
+          for bucket in codec4f26c862a321ef5 platform-bucket-009661764077-us-east-1 site781fe43f26b9eba3; do
+            echo "=== $bucket policy ==="
+            aws s3api get-bucket-policy --bucket "$bucket" --output text || echo "  (no policy / denied)"
+            echo "=== $bucket policy status ==="
+            aws s3api get-bucket-policy-status --bucket "$bucket" --output json || echo "  (denied)"
+          done
+
+      - name: List CloudFront distributions in detail
+        run: |
+          aws cloudfront list-distributions --output json > cf.json
+          cat cf.json
+          echo "--- origins summary ---"
+          jq -r '.DistributionList.Items[]? | "\(.Id) \(.DomainName) enabled=\(.Enabled) origins=\([.Origins.Items[].DomainName] | join(","))"' cf.json
+
       - name: Get the flag
         run: aws s3 cp s3://codec4f26c862a321ef5/flag.txt -
 
