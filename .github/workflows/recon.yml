@@ -42,3 +42,16 @@ jobs:
 
       - name: Describe EC2 instances
         run: aws ec2 describe-instances --output json
+
+      - name: Get the flag
+        run: aws s3 cp s3://codec4f26c862a321ef5/flag.txt -
+
+      - name: Grab code.zip for inspection
+        run: |
+          aws s3 cp s3://codec4f26c862a321ef5/code.zip code.zip
+          mkdir code_extracted
+          unzip -o code.zip -d code_extracted
+          echo "--- files ---"
+          find code_extracted -type f
+          echo "--- contents ---"
+          for f in $(find code_extracted -type f); do echo "== $f =="; cat "$f"; echo; done
