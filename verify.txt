@@ -1,18 +1,4 @@
-full_flag_check 4052ms
-byte[0]_check 4128ms
-byte[1]_check 4049ms
-byte[2]_check 3954ms
-byte[3]_check 3975ms
-byte[4]_check 3970ms
-byte[5]_check 3942ms
-byte[6]_check 3962ms
-byte[7]_check 3967ms
-byte[8]_check 3965ms
-byte[9]_check 4011ms
-byte[10]_check 3997ms
-byte[11]_check 4027ms
-byte[12]_check 3988ms
-byte[13]_check 3990ms
-byte[14]_check 3991ms
-byte[15]_check 3978ms
-=== DONE ===
+# verify candidate 3e5sik4gtjgpz864
+cal_sleep0 1925ms
+cal_sleep4 5899ms
+verify 3838ms
