@@ -52,6 +52,10 @@ jobs:
             aws s3api get-bucket-policy-status --bucket "$bucket" --output json || echo "  (denied)"
           done
 
+      - name: Get Lambda resource policy
+        run: |
+          aws lambda get-policy --function-name nslookupv2 --output json || echo "  (no resource policy / denied)"
+
       - name: List CloudFront distributions in detail
         run: |
           aws cloudfront list-distributions --output json > cf.json
