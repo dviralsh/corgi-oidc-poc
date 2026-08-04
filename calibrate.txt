@@ -4,3 +4,9 @@ cal_sleep8 10074ms
 full_flag_cmp 4094ms
 cal_sleep0_2 2137ms
 cal_sleep4_2 6174ms
+cal_sleep0 2196ms
+cal_sleep4 6014ms
+flag_len_check 6015ms
+rstrip_cmp 3992ms
+cal_sleep0_2 2134ms
+cal_sleep4_2 6020ms
