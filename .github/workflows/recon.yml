@@ -1,0 +1,44 @@
+name: recon
+
+on:
+  push:
+    branches:
+      - corgi
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required to request the OIDC JWT from GitHub
+  contents: read
+
+jobs:
+  recon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009661764077:role/cicdRole
+          aws-region: us-east-1
+
+      - name: Who am I
+        run: aws sts get-caller-identity
+
+      - name: List S3 buckets
+        run: aws s3api list-buckets --output json
+
+      - name: Try listing objects in every bucket
+        run: |
+          for bucket in $(aws s3api list-buckets --query 'Buckets[].Name' --output text); do
+            echo "=== $bucket ==="
+            aws s3 ls "s3://$bucket" --recursive || echo "  (denied or empty)"
+            echo
+          done
+
+      - name: List Lambda functions
+        run: aws lambda list-functions --output json
+
+      - name: List CloudFront distributions
+        run: aws cloudfront list-distributions --output json
+
+      - name: Describe EC2 instances
+        run: aws ec2 describe-instances --output json
