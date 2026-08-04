@@ -10,3 +10,16 @@ flag_len_check 6015ms
 rstrip_cmp 3992ms
 cal_sleep0_2 2134ms
 cal_sleep4_2 6020ms
+b2hi_0 3035ms
+b2hi_2 3001ms
+b2hi_3 4008ms
+b2hi_4 2967ms
+b2hi_5 2979ms
+b2hi_8 3994ms
+b2hi_9 3012ms
+b2hi_12 4034ms
+b2hi_13 3018ms
+b2hi_14 3036ms
+b2hi_15 3012ms
+first_half 3994ms
+second_half 4015ms
