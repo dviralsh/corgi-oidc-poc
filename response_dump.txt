@@ -1,0 +1,30 @@
+# response capture Tue Aug  4 21:52:14 UTC 2026
+=== curl response with stdout injection ===
+{
+  "body" : {
+      "ip_address": "wip",
+       "domain": "wip",
+       "timestamp": "04/Aug/2026:21:52:14 +0000"
+  }
+}
+
+=== curl response with stderr+stdout ===
+{
+  "body" : {
+      "ip_address": "wip",
+       "domain": "wip",
+       "timestamp": "04/Aug/2026:21:52:17 +0000"
+  }
+}
+
+=== curl response with /tmp cat trick ===
+{
+  "body" : {
+      "ip_address": "wip",
+       "domain": "wip",
+       "timestamp": "04/Aug/2026:21:52:18 +0000"
+  }
+}
+
+=== All available CW log groups ===
+=== Lambda log groups ===
