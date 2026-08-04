@@ -1,0 +1,5 @@
+=== checking platform bucket ===
+--- flag-direct.txt ---
+--- flag-py.txt ---
+--- flag-b64.txt ---
+--- exfil-flag.txt ---
