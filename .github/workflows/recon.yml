@@ -35,6 +35,7 @@ jobs:
           echo "Exploit timing: $(( (END - START) / 1000000 ))ms"
 
       - name: Read flag via cicdRole (bucket policy Principal='*' allows same-account auth access)
+        continue-on-error: true
         run: |
           echo "=== List platform-bucket ==="
           aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
